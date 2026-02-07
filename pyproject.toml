@@ -14,3 +14,7 @@ test = ["pytest>=8.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.modulo_three.commands]
+test = "make test"
+docs = "make docs"

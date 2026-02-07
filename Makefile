@@ -2,7 +2,7 @@ APP_IMAGE  := modulo-three-app
 TEST_IMAGE := modulo-three-test
 ARGS       ?= 1011
 
-.PHONY: app-build app-run test-build test-run
+.PHONY: app-build app-run test-build test-run test docs
 
 app-build:
 	docker build -t $(APP_IMAGE) -f Dockerfile .
@@ -15,3 +15,9 @@ test-build:
 
 test-run: test-build
 	docker run --rm $(TEST_IMAGE)
+
+test:
+	python -m pytest -q tests
+
+docs:
+	@echo "TODO: wire docs generation command"
