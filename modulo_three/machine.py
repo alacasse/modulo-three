@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Generic, Mapping, TypeVar
-
-StateT = TypeVar("StateT")
-SymbolT = TypeVar("SymbolT")
+from typing import SupportsInt, cast
 
 
 @dataclass(slots=True)
-class FiniteMachine(Generic[StateT, SymbolT]):
+class FiniteMachine[StateT: SupportsInt, SymbolT]:
     """Generic finite-machine 5-tuple data model."""
 
     Q: set[StateT]
@@ -23,8 +21,9 @@ class FiniteMachine(Generic[StateT, SymbolT]):
         """Process input left-to-right and return the final state."""
         self._validate_input_type(input)
         current_state = self.q0
-        for index, symbol in enumerate(input):
-            self._validate_symbol(index, symbol)
+        for index, raw_symbol in enumerate(input):
+            self._validate_symbol(index, raw_symbol)
+            symbol = cast(SymbolT, raw_symbol)
             current_state = self.delta[(current_state, symbol)]
         return int(current_state)
 

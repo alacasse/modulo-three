@@ -2,18 +2,19 @@
 
 from __future__ import annotations
 
-import unittest
+from typing import Any, cast
 
+import pytest
 from modulo_three.builder import FiniteMachineBuilder
 from modulo_three.machine import FiniteMachine
 
 
-class MissingBuildBuilder(FiniteMachineBuilder):
+class MissingBuildBuilder(FiniteMachineBuilder[int, str]):
     pass
 
 
-class DummyBuilder(FiniteMachineBuilder):
-    def build(self) -> FiniteMachine[int, str]:
+class DummyBuilder(FiniteMachineBuilder[int, str]):
+    def build(self, mod: int) -> FiniteMachine[int, str]:
         return FiniteMachine(
             Q={0},
             Sigma={"a"},
@@ -23,20 +24,19 @@ class DummyBuilder(FiniteMachineBuilder):
         )
 
 
-class FiniteMachineBuilderBaseTests(unittest.TestCase):
-    def test_base_builder_is_abstract(self) -> None:
-        with self.assertRaises(TypeError):
-            FiniteMachineBuilder()
-
-    def test_concrete_builder_must_implement_build(self) -> None:
-        with self.assertRaises(TypeError):
-            MissingBuildBuilder()
-
-    def test_concrete_builder_can_construct_finite_machine(self) -> None:
-        builder = DummyBuilder()
-        machine = builder.build()
-        self.assertIsInstance(machine, FiniteMachine)
+def test_base_builder_is_abstract() -> None:
+    builder_cls = cast(Any, FiniteMachineBuilder[int, str])
+    with pytest.raises(TypeError):
+        builder_cls()
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_concrete_builder_must_implement_build() -> None:
+    missing_builder_cls = cast(Any, MissingBuildBuilder)
+    with pytest.raises(TypeError):
+        missing_builder_cls()
+
+
+def test_concrete_builder_can_construct_finite_machine() -> None:
+    builder = DummyBuilder()
+    machine = builder.build(1)
+    assert isinstance(machine, FiniteMachine)

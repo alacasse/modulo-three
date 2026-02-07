@@ -11,7 +11,25 @@ This project implements a deterministic finite automaton with output (Moore mach
 Local test commands:
 
 - `make test`
+- `python -m pytest -q tests`
+- `make lint`
+- `make typecheck`
+- `make check`
+- `make pre-commit-install`
+- `make pre-commit-run`
 - `make docs`
+
+Testing framework:
+
+- `pytest` is the standard and exclusive test runner for this project.
+- New tests should be written as standalone `pytest` tests (functions, fixtures, and plain `assert` statements).
+
+Static analysis tooling:
+
+- `ruff` for linting and formatting checks.
+- `mypy` and `pyright` for static type checking.
+- `pre-commit` for running these checks automatically before commits.
+- `pre-commit` runs lint/type checks on commit and `pytest` on push.
 
 Docker workflow commands:
 

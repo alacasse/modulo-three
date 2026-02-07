@@ -11,10 +11,39 @@ dependencies = []
 
 [project.optional-dependencies]
 test = ["pytest>=8.0"]
+dev = [
+    "mypy>=1.11.0",
+    "pre-commit>=4.0.0",
+    "pyright>=1.1.380",
+    "pytest>=8.0",
+    "ruff>=0.6.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["modulo_three", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["modulo_three", "tests"]
+show_error_codes = true
+pretty = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_return_any = true
+no_implicit_reexport = true
+
 [tool.modulo_three.commands]
 test = "make test"
 docs = "make docs"
+lint = "make lint"
+typecheck = "make typecheck"
+check = "make check"

@@ -2,37 +2,33 @@
 
 from __future__ import annotations
 
-import unittest
-
+import pytest
 from modulo_three.machine import FiniteMachine
 
 
-class FiniteMachineValidationTests(unittest.TestCase):
-    def _machine(self) -> FiniteMachine[int, str]:
-        return FiniteMachine(
-            Q={0, 1},
-            Sigma={"a", "b"},
-            q0=0,
-            F={0, 1},
-            delta={
-                (0, "a"): 1,
-                (1, "b"): 0,
-            },
-        )
-
-    def test_run_raises_type_error_for_non_string_input(self) -> None:
-        machine = self._machine()
-        with self.assertRaisesRegex(TypeError, r"input must be str"):
-            machine.run(123)  # type: ignore[arg-type]
-
-    def test_run_raises_value_error_for_invalid_symbol_with_index(self) -> None:
-        machine = self._machine()
-        with self.assertRaisesRegex(
-            ValueError,
-            r"invalid symbol at index 1: 'z'",
-        ):
-            machine.run("az")
+def _machine() -> FiniteMachine[int, str]:
+    return FiniteMachine(
+        Q={0, 1},
+        Sigma={"a", "b"},
+        q0=0,
+        F={0, 1},
+        delta={
+            (0, "a"): 1,
+            (1, "b"): 0,
+        },
+    )
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_run_raises_type_error_for_non_string_input() -> None:
+    machine = _machine()
+    with pytest.raises(TypeError, match=r"input must be str"):
+        machine.run(123)  # type: ignore[arg-type]
+
+
+def test_run_raises_value_error_for_invalid_symbol_with_index() -> None:
+    machine = _machine()
+    with pytest.raises(
+        ValueError,
+        match=r"invalid symbol at index 1: 'z'",
+    ):
+        machine.run("az")
