@@ -18,3 +18,10 @@ class FiniteMachine(Generic[StateT, SymbolT]):
     q0: StateT
     F: set[StateT]
     delta: Mapping[tuple[StateT, SymbolT], StateT]
+
+    def run(self, input: str) -> int:
+        """Process input left-to-right and return the final state."""
+        current_state = self.q0
+        for symbol in input:
+            current_state = self.delta[(current_state, symbol)]
+        return int(current_state)
