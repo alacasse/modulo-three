@@ -21,7 +21,19 @@ class FiniteMachine(Generic[StateT, SymbolT]):
 
     def run(self, input: str) -> int:
         """Process input left-to-right and return the final state."""
+        self._validate_input_type(input)
         current_state = self.q0
-        for symbol in input:
+        for index, symbol in enumerate(input):
+            self._validate_symbol(index, symbol)
             current_state = self.delta[(current_state, symbol)]
         return int(current_state)
+
+    def _validate_input_type(self, input: object) -> None:
+        """Hook for run input type validation."""
+        if not isinstance(input, str):
+            raise TypeError("input must be str")
+
+    def _validate_symbol(self, index: int, symbol: object) -> None:
+        """Hook for run symbol validation."""
+        if symbol not in self.Sigma:
+            raise ValueError(f"invalid symbol at index {index}: {symbol!r}")
