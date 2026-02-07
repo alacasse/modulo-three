@@ -1,0 +1,11 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY pyproject.toml .
+COPY modulo_three/ modulo_three/
+COPY tests/ tests/
+
+RUN pip install --no-cache-dir ".[test]"
+
+CMD ["pytest", "-v"]
