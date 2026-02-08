@@ -8,6 +8,11 @@ This project implements a deterministic finite automaton with output (Moore mach
 
 ## Commands
 
+App usage:
+
+- `python -m modulo_three 1011`
+- `python -m modulo_three --interactive`
+
 Local test commands:
 
 - `make test`
