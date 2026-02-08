@@ -6,6 +6,54 @@ A Moore machine implementation that computes the remainder of a binary input str
 
 This project implements a deterministic finite automaton with output (Moore machine) designed to process binary input sequences and determine their remainder modulo 3. The machine maintains its current state as the accumulated remainder, transitioning between states based on each input digit processed.
 
+## Public API
+
+App-level entrypoint:
+
+- `modThree(input: str) -> int`
+
+Reusable finite machine API:
+
+- `FiniteMachine[StateT, SymbolT]` in `modulo_three/machine.py`
+  - `run(input_symbols: Iterable[SymbolT]) -> StateT`
+- `BinaryModFiniteMachineBuilder` in `modulo_three/builder.py`
+- `DeterministicTableMachineBuilder` + `DeterministicMachineSpec` in `modulo_three/builder.py`
+
+## Reusable Example (Non-Modulo)
+
+```python
+from enum import Enum, auto
+
+from modulo_three.builder import (
+    DeterministicMachineSpec,
+    DeterministicTableMachineBuilder,
+)
+
+
+class Phase(Enum):
+    START = auto()
+    MID = auto()
+    END = auto()
+
+
+builder = DeterministicTableMachineBuilder[Phase, int]()
+machine = builder.build(
+    DeterministicMachineSpec(
+        Q={Phase.START, Phase.MID, Phase.END},
+        Sigma={0, 1},
+        q0=Phase.START,
+        F={Phase.END},
+        delta={
+            (Phase.START, 1): Phase.MID,
+            (Phase.MID, 0): Phase.END,
+        },
+    )
+)
+
+final_state = machine.run([1, 0])
+assert final_state is Phase.END
+```
+
 ## Commands
 
 App usage:
