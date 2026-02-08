@@ -30,3 +30,33 @@ def test_simple_deterministic_trace_returns_final_state() -> None:
     )
 
     assert 2 == machine.run("ab")
+
+
+def test_run_supports_non_string_symbols() -> None:
+    machine = FiniteMachine(
+        Q={0, 1, 2},
+        Sigma={0, 1},
+        q0=0,
+        F={0, 1, 2},
+        delta={
+            (0, 0): 1,
+            (1, 1): 2,
+        },
+    )
+
+    assert 2 == machine.run([0, 1])
+
+
+def test_run_returns_non_int_state_type() -> None:
+    machine = FiniteMachine(
+        Q={"START", "MID", "END"},
+        Sigma={"a", "b"},
+        q0="START",
+        F={"END"},
+        delta={
+            ("START", "a"): "MID",
+            ("MID", "b"): "END",
+        },
+    )
+
+    assert "END" == machine.run("ab")

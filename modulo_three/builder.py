@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import SupportsInt
+from collections.abc import Hashable
 
 from modulo_three.machine import FiniteMachine
 
 
-class FiniteMachineBuilder[StateT: SupportsInt, SymbolT](ABC):
+class FiniteMachineBuilder[StateT: Hashable, SymbolT: Hashable](ABC):
     """Base contract for builders that construct finite machines."""
 
     @abstractmethod

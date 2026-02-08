@@ -19,9 +19,9 @@ def _machine() -> FiniteMachine[int, str]:
     )
 
 
-def test_run_raises_type_error_for_non_string_input() -> None:
+def test_run_raises_type_error_for_non_iterable_input() -> None:
     machine = _machine()
-    with pytest.raises(TypeError, match=r"input must be str"):
+    with pytest.raises(TypeError, match=r"input_symbols must be iterable"):
         machine.run(123)  # type: ignore[arg-type]
 
 
