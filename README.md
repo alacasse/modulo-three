@@ -16,8 +16,26 @@ Reusable finite machine API:
 
 - `FiniteMachine[StateT, SymbolT]` in `modulo_three/machine.py`
   - `run(input_symbols: Iterable[SymbolT]) -> StateT`
-- `BinaryModFiniteMachineBuilder` in `modulo_three/builder.py`
-- `DeterministicTableMachineBuilder` + `DeterministicMachineSpec` in `modulo_three/builder.py`
+- `BinaryModFiniteMachineBuilder` in `modulo_three/builder.py` **(primary implementation)**
+- `DeterministicTableMachineBuilder` + `DeterministicMachineSpec` in `modulo_three/builder.py` *(demonstration only)*
+
+## Builder Pattern Flexibility
+
+This project demonstrates the Builder pattern for constructing finite machines through two implementations:
+
+### `BinaryModFiniteMachineBuilder` (Primary)
+
+The `BinaryModFiniteMachineBuilder` is the **actual implementation used in this project** for creating binary modulo finite machines. It directly constructs the state machine for computing remainders modulo N for binary inputs.
+
+### `DeterministicTableMachineBuilder` (Demonstration)
+
+The `DeterministicTableMachineBuilder` and its associated tests are **primarily included to demonstrate the flexibility and extensibility** of the Builder pattern and the `FiniteMachine` abstraction. They show how the framework can be used with:
+
+- Custom state types (e.g., enums, strings)
+- Explicit transition tables
+- Arbitrary hashable state and symbol types
+
+The test suite for this builder (`tests/test_table_builder.py`) serves as documentation for this flexibility rather than as tests for production code.
 
 ## FiniteMachine Scope
 
@@ -36,7 +54,9 @@ Not intended to support:
 - hierarchical/composite/parallel state models (statecharts/HFSM semantics)
 - built-in import/export or interoperability formats (DOT/SCXML/JSON schemas)
 
-## Reusable Example (Non-Modulo)
+## Reusable Example (Demonstration)
+
+The following example demonstrates the flexibility of the `FiniteMachine` and `DeterministicTableMachineBuilder` by building a non-modulo machine with custom state types:
 
 ```python
 from enum import Enum, auto
@@ -70,6 +90,8 @@ machine = builder.build(
 final_state = machine.run([1, 0])
 assert final_state is Phase.END
 ```
+
+This example showcases the builder's ability to work with arbitrary hashable types. For the actual modulo-three machine used in this project, see `BinaryModFiniteMachineBuilder`.
 
 ## Commands
 

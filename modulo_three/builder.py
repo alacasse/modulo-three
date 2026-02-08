@@ -1,4 +1,17 @@
-"""Builder abstractions for finite-machine construction."""
+"""Builder abstractions for finite-machine construction.
+
+This module provides builder classes for constructing finite machines.
+
+Note
+----
+The :class:`DeterministicTableMachineBuilder` and its associated tests are
+primarily included to demonstrate the flexibility and extensibility of the
+Builder pattern and the :class:`FiniteMachine` abstraction. They show how the
+framework can be used with custom state types and explicit transition tables.
+
+The :class:`BinaryModFiniteMachineBuilder` is the primary implementation used
+in this project for creating binary modulo finite machines.
+"""
 
 from __future__ import annotations
 
@@ -19,7 +32,11 @@ class FiniteMachineBuilder[StateT: Hashable, SymbolT: Hashable, BuildInputT](ABC
 
 @dataclass(slots=True)
 class DeterministicMachineSpec[StateT: Hashable, SymbolT: Hashable]:
-    """Definition object for constructing deterministic finite machines."""
+    """Definition object for constructing deterministic finite machines.
+
+    This class is primarily used to demonstrate the flexibility of the Builder
+    pattern. See :class:`DeterministicTableMachineBuilder` for usage examples.
+    """
 
     Q: set[StateT]
     Sigma: set[SymbolT]
@@ -31,7 +48,19 @@ class DeterministicMachineSpec[StateT: Hashable, SymbolT: Hashable]:
 class DeterministicTableMachineBuilder[StateT: Hashable, SymbolT: Hashable](
     FiniteMachineBuilder[StateT, SymbolT, DeterministicMachineSpec[StateT, SymbolT]]
 ):
-    """Builder that creates a finite machine from an explicit transition table."""
+    """Builder that creates a finite machine from an explicit transition table.
+
+    This builder is included to demonstrate the flexibility of the Builder
+    pattern and the :class:`FiniteMachine` abstraction. It allows constructing
+    machines with arbitrary hashable state and symbol types using an explicit
+    transition table.
+
+    Note
+    ----
+    This class and its test suite (:mod:`tests.test_table_builder`) are primarily
+    for demonstration purposes. The :class:`BinaryModFiniteMachineBuilder` is
+    the actual builder used in this project.
+    """
 
     def build(
         self,
