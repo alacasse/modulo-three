@@ -22,12 +22,18 @@ class BinaryModFiniteMachineBuilder(FiniteMachineBuilder[int, str]):
     def build(self, mod: int) -> FiniteMachine[int, str]:
         self._validate_mod(mod)
         states = set(range(mod))
+        alphabet = {"0", "1"}
+        transitions = {
+            (state, symbol): (2 * state + int(symbol)) % mod
+            for state in states
+            for symbol in alphabet
+        }
         return FiniteMachine(
             Q=states,
-            Sigma={"0", "1"},
+            Sigma=alphabet,
             q0=0,
             F=set(states),
-            delta={},
+            delta=transitions,
         )
 
     def _validate_mod(self, mod: object) -> None:
