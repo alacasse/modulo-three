@@ -19,6 +19,23 @@ Reusable finite machine API:
 - `BinaryModFiniteMachineBuilder` in `modulo_three/builder.py`
 - `DeterministicTableMachineBuilder` + `DeterministicMachineSpec` in `modulo_three/builder.py`
 
+## FiniteMachine Scope
+
+Intended to support:
+
+- static deterministic finite machines (DFA-style) with hashable states/symbols
+- table-driven transitions from `(state, symbol)` to exactly one next state
+- single-pass processing of an input sequence to produce a final state
+
+Not intended to support:
+
+- nondeterminism (NFA), epsilon transitions, or probabilistic branching
+- guarded/contextual transitions (timers, external state checks, payload-aware events)
+- runtime mutation of machine structure (`add_state`, `add_transition`, hot-reload updates)
+- state behavior hooks (entry/exit actions, transition callbacks, metrics/listeners)
+- hierarchical/composite/parallel state models (statecharts/HFSM semantics)
+- built-in import/export or interoperability formats (DOT/SCXML/JSON schemas)
+
 ## Reusable Example (Non-Modulo)
 
 ```python
