@@ -21,7 +21,7 @@ def _machine() -> FiniteMachine[int, str]:
 
 def test_run_raises_type_error_for_non_iterable_input() -> None:
     machine = _machine()
-    with pytest.raises(TypeError, match=r"input_symbols must be iterable"):
+    with pytest.raises(TypeError):
         machine.run(123)  # type: ignore[arg-type]
 
 

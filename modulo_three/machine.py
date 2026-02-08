@@ -1,7 +1,5 @@
 """Finite machine model."""
 
-from __future__ import annotations
-
 from collections.abc import Hashable, Iterable, Mapping
 from dataclasses import dataclass
 
@@ -21,21 +19,12 @@ class FiniteMachine[StateT: Hashable, SymbolT: Hashable]:
 
     def run(self, input_symbols: Iterable[SymbolT]) -> StateT:
         """Process input left-to-right and return the final state."""
-        try:
-            symbols = iter(input_symbols)
-        except TypeError as exc:
-            raise TypeError("input_symbols must be iterable") from exc
-
         current_state = self.q0
-        for index, symbol in enumerate(symbols):
-            self._validate_symbol(index, symbol)
+        for index, symbol in enumerate(input_symbols):
+            if symbol not in self.Sigma:
+                raise ValueError(f"invalid symbol at index {index}: {symbol!r}")
             current_state = self.delta[(current_state, symbol)]
         return current_state
-
-    def _validate_symbol(self, index: int, symbol: SymbolT) -> None:
-        """Hook for run symbol validation."""
-        if symbol not in self.Sigma:
-            raise ValueError(f"invalid symbol at index {index}: {symbol!r}")
 
     def _validate_definition(self) -> None:
         if self.q0 not in self.Q:
