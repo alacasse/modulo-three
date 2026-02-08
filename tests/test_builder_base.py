@@ -9,12 +9,12 @@ from modulo_three.builder import FiniteMachineBuilder
 from modulo_three.machine import FiniteMachine
 
 
-class MissingBuildBuilder(FiniteMachineBuilder[int, str]):
+class MissingBuildBuilder(FiniteMachineBuilder[int, str, int]):
     pass
 
 
-class DummyBuilder(FiniteMachineBuilder[int, str]):
-    def build(self, mod: int) -> FiniteMachine[int, str]:
+class DummyBuilder(FiniteMachineBuilder[int, str, int]):
+    def build(self, config: int) -> FiniteMachine[int, str]:
         return FiniteMachine(
             Q={0},
             Sigma={"a"},
@@ -25,7 +25,7 @@ class DummyBuilder(FiniteMachineBuilder[int, str]):
 
 
 def test_base_builder_is_abstract() -> None:
-    builder_cls = cast(Any, FiniteMachineBuilder[int, str])
+    builder_cls = cast(Any, FiniteMachineBuilder[int, str, int])
     with pytest.raises(TypeError):
         builder_cls()
 
