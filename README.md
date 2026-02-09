@@ -86,6 +86,12 @@ For the modulo-three machine used in this project, see `build_binary_mod_machine
 
 App usage:
 
+### No venv needed
+
+- `make app-run` (Docker, interactive mode)
+- `make app-run ARGS=1011` (Docker, one-shot input)
+
+### Setup venv needed
 - `python -m modulo_three 1011`
 - `python -m modulo_three --interactive`
 
@@ -115,6 +121,7 @@ Static analysis tooling:
 Docker workflow commands:
 
 - `make app-build`
+- `make app-run` (defaults to `--interactive`)
 - `make app-run ARGS=1011`
 - `make test-build`
 - `make test-run`

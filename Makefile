@@ -1,6 +1,7 @@
 APP_IMAGE  := modulo-three-app
 TEST_IMAGE := modulo-three-test
-ARGS       ?= 1011
+ARGS       ?= --interactive
+DOCKER_TTY := $(shell if [ -t 0 ] && [ -t 1 ]; then echo -it; else echo -i; fi)
 PRE_COMMIT_HOME ?= $(CURDIR)/.cache/pre-commit
 
 .PHONY: app-build app-run test-build test-run test lint format typecheck check pre-commit-install pre-commit-run docs
@@ -9,7 +10,7 @@ app-build:
 	docker build -t $(APP_IMAGE) -f Dockerfile .
 
 app-run: app-build
-	docker run --rm $(APP_IMAGE) $(ARGS)
+	docker run --rm $(DOCKER_TTY) $(APP_IMAGE) $(ARGS)
 
 test-build:
 	docker build -t $(TEST_IMAGE) -f Dockerfile.test .
