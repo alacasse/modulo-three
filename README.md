@@ -88,22 +88,22 @@ App usage:
 
 ### No venv needed
 
-- `make app-run` (Docker, interactive mode)
-- `make app-run ARGS=1011` (Docker, one-shot input)
+- `make run` (Docker, interactive mode)
+- `make run ARGS=1011` (Docker, one-shot input)
 
-### Setup venv needed
+### Optional local run (without Docker)
 - `python -m modulo_three 1011`
 - `python -m modulo_three --interactive`
 
 Local test commands:
 
 - `make test`
-- `python -m pytest -q tests`
 - `make lint`
+- `make format`
 - `make typecheck`
 - `make check`
 - `make pre-commit-install`
-- `make pre-commit-run`
+- `make pre-commit`
 - `make docs`
 
 Testing framework:
@@ -120,11 +120,15 @@ Static analysis tooling:
 
 Docker workflow commands:
 
-- `make app-build`
-- `make app-run` (defaults to `--interactive`)
-- `make app-run ARGS=1011`
-- `make test-build`
-- `make test-run`
+- `make build-app`
+- `make build-dev`
+- `make run` (defaults to `--interactive`)
+- `make run ARGS=1011`
+- `make test`
+- `make lint`
+- `make format`
+- `make typecheck`
+- `make pre-commit`
 
 ## Testing Scope
 

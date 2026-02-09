@@ -1,43 +1,39 @@
+DEV_IMAGE  := modulo-three-dev
 APP_IMAGE  := modulo-three-app
-TEST_IMAGE := modulo-three-test
 ARGS       ?= --interactive
 DOCKER_TTY := $(shell if [ -t 0 ] && [ -t 1 ]; then echo -it; else echo -i; fi)
 PRE_COMMIT_HOME ?= $(CURDIR)/.cache/pre-commit
 
-.PHONY: app-build app-run test-build test-run test lint format typecheck check pre-commit-install pre-commit-run docs
+.PHONY: build-dev build-app run test lint format typecheck check pre-commit-install pre-commit docs
 
-app-build:
+build-dev:
+	docker build -t $(DEV_IMAGE) -f Dockerfile.dev .
+
+build-app:
 	docker build -t $(APP_IMAGE) -f Dockerfile .
 
-app-run: app-build
+run: build-app
 	docker run --rm $(DOCKER_TTY) $(APP_IMAGE) $(ARGS)
 
-test-build:
-	docker build -t $(TEST_IMAGE) -f Dockerfile.test .
+test: build-dev
+	docker run --rm -v $(CURDIR):/app $(DEV_IMAGE) pytest -q tests
 
-test-run: test-build
-	docker run --rm $(TEST_IMAGE)
+lint: build-dev
+	docker run --rm -v $(CURDIR):/app $(DEV_IMAGE) ruff check modulo_three tests
 
-test:
-	python -m pytest -q tests
+format: build-dev
+	docker run --rm -v $(CURDIR):/app $(DEV_IMAGE) ruff format modulo_three tests
 
-lint:
-	.venv/bin/ruff check modulo_three tests
-
-format:
-	.venv/bin/ruff format modulo_three tests
-
-typecheck:
-	.venv/bin/mypy modulo_three tests
-	.venv/bin/pyright
+typecheck: build-dev
+	docker run --rm -v $(CURDIR):/app $(DEV_IMAGE) sh -c "mypy modulo_three tests && pyright"
 
 check: lint typecheck test
 
-pre-commit-install:
-	PRE_COMMIT_HOME=$(PRE_COMMIT_HOME) .venv/bin/pre-commit install --hook-type pre-commit --hook-type pre-push
+pre-commit-install: build-dev
+	docker run --rm -e PRE_COMMIT_HOME=$(PRE_COMMIT_HOME) -v $(PRE_COMMIT_HOME):/root/.cache/pre-commit -v $(CURDIR):/app $(DEV_IMAGE) pre-commit install --hook-type pre-commit --hook-type pre-push
 
-pre-commit-run:
-	PRE_COMMIT_HOME=$(PRE_COMMIT_HOME) .venv/bin/pre-commit run --all-files
+pre-commit: build-dev
+	docker run --rm -e PRE_COMMIT_HOME=$(PRE_COMMIT_HOME) -v $(PRE_COMMIT_HOME):/root/.cache/pre-commit -v $(CURDIR):/app $(DEV_IMAGE) pre-commit run --all-files
 
 docs:
 	@echo "TODO: wire docs generation command"
