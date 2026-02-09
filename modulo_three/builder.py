@@ -38,7 +38,7 @@ class DeterministicMachineSpec[StateT: Hashable, SymbolT: Hashable]:
     delta: Mapping[tuple[StateT, SymbolT], StateT]
 
 
-class MachineBuilder[StateT: Hashable, SymbolT: Hashable](ABC):
+class DeterministicMachineBuilder[StateT: Hashable, SymbolT: Hashable](ABC):
     """Build a FiniteMachine from a deterministic specification."""
 
     @abstractmethod
@@ -49,7 +49,7 @@ class MachineBuilder[StateT: Hashable, SymbolT: Hashable](ABC):
 
 
 class DeterministicTableMachineBuilder[StateT: Hashable, SymbolT: Hashable](
-    MachineBuilder[StateT, SymbolT]
+    DeterministicMachineBuilder[StateT, SymbolT]
 ):
     """Builder that creates a finite machine from an explicit transition table.
 

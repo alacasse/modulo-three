@@ -5,15 +5,15 @@ from __future__ import annotations
 from typing import Any, cast
 
 import pytest
-from modulo_three.builder import DeterministicMachineSpec, MachineBuilder
+from modulo_three.builder import DeterministicMachineBuilder, DeterministicMachineSpec
 from modulo_three.machine import FiniteMachine
 
 
-class MissingSpecBuilder(MachineBuilder[int, str]):
+class MissingSpecBuilder(DeterministicMachineBuilder[int, str]):
     pass
 
 
-class DummyBuilder(MachineBuilder[int, str]):
+class DummyBuilder(DeterministicMachineBuilder[int, str]):
     def from_spec(self, spec: DeterministicMachineSpec[int, str]) -> FiniteMachine[int, str]:
         return FiniteMachine(
             Q=set(spec.Q),
@@ -25,7 +25,7 @@ class DummyBuilder(MachineBuilder[int, str]):
 
 
 def test_base_builder_is_abstract() -> None:
-    builder_cls = cast(Any, MachineBuilder[int, str])
+    builder_cls = cast(Any, DeterministicMachineBuilder[int, str])
     with pytest.raises(TypeError):
         builder_cls()
 
