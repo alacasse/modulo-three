@@ -83,6 +83,18 @@ def test_run_returns_non_int_state_type(machine_factory: MachineFactory) -> None
     assert "END" == machine.run("ab")
 
 
+def test_run_empty_input_returns_initial_state(
+    ab_step_machine: FiniteMachine[int, str],
+) -> None:
+    assert ab_step_machine.run([]) == ab_step_machine.q0
+
+
+def test_run_empty_string_returns_initial_state(
+    ab_step_machine: FiniteMachine[int, str],
+) -> None:
+    assert ab_step_machine.run("") == ab_step_machine.q0
+
+
 def test_accepts_returns_true_when_final_state_is_accepting(
     machine_factory: MachineFactory,
 ) -> None:
@@ -115,6 +127,52 @@ def test_accepts_returns_false_when_final_state_is_not_accepting(
     )
 
     assert machine.accepts("a") is False
+
+
+def test_accepts_empty_input_true_when_q0_is_accepting(
+    ab_step_machine: FiniteMachine[int, str],
+) -> None:
+    assert ab_step_machine.accepts([]) is True
+
+
+def test_accepts_empty_input_false_when_q0_is_not_accepting(
+    machine_factory: MachineFactory,
+) -> None:
+    machine = machine_factory(
+        {0, 1},
+        {"a"},
+        0,
+        {1},
+        {
+            (0, "a"): 0,
+            (1, "a"): 1,
+        },
+    )
+
+    assert machine.accepts([]) is False
+
+
+def test_accepts_empty_string_true_when_q0_is_accepting(
+    ab_step_machine: FiniteMachine[int, str],
+) -> None:
+    assert ab_step_machine.accepts("") is True
+
+
+def test_accepts_empty_string_false_when_q0_is_not_accepting(
+    machine_factory: MachineFactory,
+) -> None:
+    machine = machine_factory(
+        {0, 1},
+        {"a"},
+        0,
+        {1},
+        {
+            (0, "a"): 0,
+            (1, "a"): 1,
+        },
+    )
+
+    assert machine.accepts("") is False
 
 
 @pytest.mark.parametrize(
