@@ -18,27 +18,16 @@ Reusable finite machine API:
   - `run(input_symbols: Iterable[SymbolT]) -> StateT`
   - `accepts(input_symbols: Iterable[SymbolT]) -> bool`
   - Use run() when you need the final state (e.g., modulo remainder). Use accepts() when you need an accept/reject verdict.
-- `build_binary_mod_machine(mod: int) -> FiniteMachine[int, str]` in `modulo_three/builder.py` **(primary implementation)**
+- `build_binary_mod_machine(mod: int) -> FiniteMachine[int, str]` in `modulo_three/builder.py`
 - `build_binary_mod_spec(mod: int) -> DeterministicMachineSpec[int, str]` in `modulo_three/builder.py`
-- `DeterministicTableMachineBuilder` + `DeterministicMachineSpec` in `modulo_three/builder.py` *(demonstration only)*
+- `DeterministicTableMachineBuilder` + `DeterministicMachineSpec` in `modulo_three/builder.py`
 
-## Builder Pattern Flexibility
+## Deterministic Construction
 
-This project demonstrates the Builder pattern for constructing finite machines through two implementations:
-
-### `build_binary_mod_machine` (Primary)
-
-The `build_binary_mod_machine` helper is the **actual implementation used in this project** for creating binary modulo finite machines. It directly constructs the state machine for computing remainders modulo N for binary inputs.
-
-### `DeterministicTableMachineBuilder` (Demonstration)
-
-The `DeterministicTableMachineBuilder` and its associated tests are **primarily included to demonstrate the flexibility and extensibility** of the Builder pattern and the `FiniteMachine` abstraction. They show how the framework can be used with:
-
-- Custom state types (e.g., enums, strings)
-- Explicit transition tables
-- Arbitrary hashable state and symbol types
-
-The test suite for this builder (`tests/test_table_builder.py`) serves as documentation for this flexibility rather than as tests for production code.
+Deterministic machines are constructed from a specification via the
+`DeterministicTableMachineBuilder`. The binary modulo helpers are convenience
+functions that assemble a modulo-specific spec and build it with the same
+builder.
 
 ## FiniteMachine Scope
 
@@ -54,9 +43,9 @@ The goal is to keep the core easy to read, easy to test, and easy to replicate b
 
 It does not attempt to support more advanced FSM features (e.g. nondeterminism, state hooks, hierarchical models, or runtime mutation), as they are not required for the intended use cases and would add unnecessary complexity.
 
-## Reusable Example (Demonstration)
+## Reusable Example
 
-The following example demonstrates the flexibility of the `FiniteMachine` and `DeterministicTableMachineBuilder` by building a non-modulo machine with custom state types:
+The following example builds a non-modulo machine with custom state types:
 
 ```python
 from enum import Enum, auto
@@ -91,7 +80,7 @@ final_state = machine.run([1, 0])
 assert final_state is Phase.END
 ```
 
-This example showcases the builder's ability to work with arbitrary hashable types. For the actual modulo-three machine used in this project, see `build_binary_mod_machine`.
+For the modulo-three machine used in this project, see `build_binary_mod_machine`.
 
 ## Commands
 

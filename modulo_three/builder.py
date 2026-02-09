@@ -1,16 +1,10 @@
-"""Builder abstractions for finite-machine construction.
+"""Deterministic finite-machine construction.
 
-This module provides builder classes and helpers for constructing finite machines.
-
-Note
-----
-The :class:`DeterministicTableMachineBuilder` and its associated tests are
-primarily included to demonstrate the flexibility and extensibility of the
-Builder pattern and the :class:`FiniteMachine` abstraction. They show how the
-framework can be used with custom state types and explicit transition tables.
-
-The binary modulo machine is provided via :func:`build_binary_mod_spec` and
-:func:`build_binary_mod_machine`.
+This module defines:
+- a deterministic machine specification (`DeterministicMachineSpec`)
+- a deterministic builder interface (`DeterministicMachineBuilder`)
+- the standard table-based builder (`DeterministicTableMachineBuilder`)
+- binary modulo helpers (`build_binary_mod_spec`, `build_binary_mod_machine`)
 """
 
 from __future__ import annotations
@@ -24,11 +18,10 @@ from modulo_three.machine import FiniteMachine
 
 @dataclass(slots=True)
 class DeterministicMachineSpec[StateT: Hashable, SymbolT: Hashable]:
-    """Definition object for constructing deterministic finite machines.
+    """Lightweight specification for deterministic finite machines.
 
-    This class is primarily used to demonstrate the flexibility of the Builder
-    pattern. See :class:`DeterministicTableMachineBuilder` for usage examples.
-    It is intentionally lightweight to keep test setup and experimentation simple.
+    Captures the state set, input alphabet, start state, accepting states, and
+    deterministic transition table used to build a :class:`FiniteMachine`.
     """
 
     Q: set[StateT]
@@ -51,18 +44,10 @@ class DeterministicMachineBuilder[StateT: Hashable, SymbolT: Hashable](ABC):
 class DeterministicTableMachineBuilder[StateT: Hashable, SymbolT: Hashable](
     DeterministicMachineBuilder[StateT, SymbolT]
 ):
-    """Builder that creates a finite machine from an explicit transition table.
+    """Standard builder that materializes a finite machine from a deterministic spec.
 
-    This builder is included to demonstrate the flexibility of the Builder
-    pattern and the :class:`FiniteMachine` abstraction. It allows constructing
-    machines with arbitrary hashable state and symbol types using an explicit
+    It supports arbitrary hashable state and symbol types with an explicit
     transition table.
-
-    Note
-    ----
-    This class and its test suite (:mod:`tests.test_table_builder`) are primarily
-    for demonstration purposes. The binary modulo helpers are the actual
-    construction path used in this project.
     """
 
     def from_spec(
