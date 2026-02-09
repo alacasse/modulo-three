@@ -92,7 +92,8 @@ class FiniteMachine[StateT: Hashable, SymbolT: Hashable]:
             The final state after processing all input symbols.
 
         Raises:
-            ValueError: If any input symbol is not in the alphabet Σ.
+            ValueError: If any input symbol is not in the alphabet Σ, or if a
+                transition is undefined for a valid (state, symbol) pair.
 
         Note:
             This implements a deterministic finite automaton (DFA), where each
@@ -102,7 +103,13 @@ class FiniteMachine[StateT: Hashable, SymbolT: Hashable]:
         for index, symbol in enumerate(input_symbols):
             if symbol not in self.Sigma:
                 raise ValueError(f"invalid symbol at index {index}: {symbol!r}")
-            current_state = self.delta[(current_state, symbol)]
+            transition_key = (current_state, symbol)
+            if transition_key not in self.delta:
+                raise ValueError(
+                    f"missing transition at index {index}: "
+                    f"state={current_state!r}, symbol={symbol!r}"
+                )
+            current_state = self.delta[transition_key]
         return current_state
 
     def _validate_definition(self) -> None:
