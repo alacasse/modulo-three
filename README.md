@@ -134,6 +134,12 @@ Docker workflow commands:
 - `make typecheck`
 - `make pre-commit`
 
+Dev image behavior:
+
+- Dev commands (`run-dev`, `test`, `lint`, `format`, `typecheck`, `pre-commit`) build the dev image only if it does not exist.
+- Use `make build-dev` to force a refresh after changing dev dependencies or `Dockerfile.dev`.
+- `typecheck` persists pyright's cache under `.cache/pyright-python` to avoid re-downloading Node on every run.
+
 ## Testing Scope
 
 The following tests are intentionally excluded as overkill for this project stage:
