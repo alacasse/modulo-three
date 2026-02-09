@@ -5,7 +5,7 @@ DOCKER_TTY := $(shell if [ -t 0 ] && [ -t 1 ]; then echo -it; else echo -i; fi)
 PRE_COMMIT_HOME ?= $(CURDIR)/.cache/pre-commit
 PYRIGHT_CACHE_HOME ?= $(CURDIR)/.cache/pyright-python
 
-.PHONY: ensure-dev-image build-dev build-app run run-dev test lint format typecheck check pre-commit-install pre-commit docs
+.PHONY: ensure-dev-image build-dev build run run-dev test lint format typecheck check pre-commit-install pre-commit docs
 
 ensure-dev-image:
 	@if ! docker image inspect $(DEV_IMAGE) >/dev/null 2>&1; then \
@@ -15,10 +15,10 @@ ensure-dev-image:
 build-dev:
 	docker build -t $(DEV_IMAGE) -f Dockerfile.dev .
 
-build-app:
+build:
 	docker build -t $(APP_IMAGE) -f Dockerfile .
 
-run: build-app
+run: build
 	docker run --rm $(DOCKER_TTY) $(APP_IMAGE) $(ARGS)
 
 run-dev: ensure-dev-image
@@ -45,4 +45,6 @@ pre-commit: ensure-dev-image
 	docker run --rm -e PRE_COMMIT_HOME=$(PRE_COMMIT_HOME) -v $(PRE_COMMIT_HOME):/root/.cache/pre-commit -v $(CURDIR):/app $(DEV_IMAGE) pre-commit run --all-files
 
 docs:
-	@echo "TODO: wire docs generation command"
+	@echo "Project documentation:"
+	@echo " - README.md"
+	@find docs -maxdepth 1 -type f -name '*.md' | sort | sed 's#^# - #'

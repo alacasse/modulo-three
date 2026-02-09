@@ -1,155 +1,374 @@
 # Modulo Three
 
-A Moore machine implementation that computes the remainder of a binary input string when divided by three.
+A **deterministic finite-state machine (FSM)** implementation that computes remainders for streaming input without converting the full input to an integer. The primary use case is binary modulo-three computation, and the generic FSM engine supports custom alphabets/moduli when you provide a machine specification.
 
-## Overview
+## Quick Start
 
-This project implements a deterministic finite automaton with output (Moore machine) designed to process binary input sequences and determine their remainder modulo 3. The machine maintains its current state as the accumulated remainder, transitioning between states based on each input digit processed.
+```bash
+# Run with Docker (no setup required)
+make run ARGS=1011        # Output: 2
+make run ARGS=-i          # Interactive mode (-i/--interactive)
+# Exit interactive mode with: exit, quit, or q
+
+# Run locally (requires Python 3.12+)
+python -m modulo_three 1011
+
+# Run tests
+make test
+```
+
+## Architecture Overview
+
+This project implements a **reusable FSM engine** that can be configured for any deterministic finite automaton. The modulo-three solution is a concrete consumer of this generic engine.
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           Layer Architecture                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Public API Layer                                                           │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │  modThree(input: str) -> int                                        │   │
+│  │  (in modulo_three/simple_facade.py)                                 │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  FSM Engine Layer (Generic, Reusable)                                       │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │  FiniteMachine[StateT, SymbolT]                                      │   │
+│  │  - run(input_symbols) -> StateT                                     │   │
+│  │  - accepts(input_symbols) -> bool                                   │   │
+│  │  (in modulo_three/machine.py)                                       │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  Specification/Builder Layer                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │  DeterministicMachineSpec[StateT, SymbolT] (machine specification)  │   │
+│  │  DeterministicTableMachineBuilder                                   │   │
+│  │  build_binary_mod_machine(mod: int)                                 │   │
+│  │  (in modulo_three/builder.py)                                       │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Design Choices
+
+### 1. Separation of Concerns
+
+The architecture deliberately separates three distinct responsibilities:
+
+| Layer | Responsibility | File | Reusable? |
+| ----- | -------------- | ---- | --------- |
+| **Engine** | Pure transition execution, state management | [`machine.py`](modulo_three/machine.py) | Yes - no domain logic |
+| **Builder** | Transition table construction, validation | [`builder.py`](modulo_three/builder.py) | Yes - configurable |
+| **Facade** | Input parsing, public API, caching | [`simple_facade.py`](modulo_three/simple_facade.py) | Domain-specific |
+
+**Why this matters**: The engine contains **no modulo arithmetic**. This is a hard requirement from the specification—the FSM must be a pure lookup executor, not a calculator.
+
+### 2. Table-Driven Transitions
+
+The FSM uses a **lookup table** (`delta: Mapping[tuple[StateT, SymbolT], StateT]`) instead of computing transitions dynamically:
+
+```python
+# Machine definition (engine-agnostic)
+machine = FiniteMachine(
+    Q={0, 1, 2},              # States (remainders)
+    Sigma={"0", "1"},          # Alphabet (binary digits)
+    q0=0,                      # Initial state (remainder 0)
+    F={0, 1, 2},              # All states are accepting
+    delta={
+        (0, "0"): 0, (0, "1"): 1,
+        (1, "0"): 2, (1, "1"): 0,
+        (2, "0"): 1, (2, "1"): 2,
+    },
+)
+```
+
+The transition function is constructed at build-time, not computed at runtime:
+
+```python
+# Builder creates the table (contains % operator)
+transitions = {
+    (state, symbol): (2 * state + int(symbol)) % mod  # % is OK here
+    for state in states
+    for symbol in alphabet
+}
+```
+
+### 3. Generic Type Parameters
+
+The FSM uses Python's generics to support arbitrary state and symbol types:
+
+```python
+class FiniteMachine[StateT: Hashable, SymbolT: Hashable]:
+    ...
+```
+
+This enables:
+
+- **Integer states** (modulo remainders: `0, 1, 2`)
+- **Enum states** (for readable state names)
+- **Custom types** (any hashable type)
+
+### 4. Dataclasses with Slots
+
+All data classes use `@dataclass(slots=True)` for:
+
+- Memory efficiency (no `__dict__` overhead)
+- Type safety (explicit field declarations)
+- IDE support (autocomplete, go-to-definition)
+
+### 5. Runtime Validation
+
+The [`FiniteMachine`](modulo_three/machine.py:51) validates its definition on construction:
+
+```python
+def _validate_definition_total(self) -> None:
+    # Validates:
+    # 1. Q and Sigma are non-empty
+    # 2. q0 ∈ Q
+    # 3. F ⊆ Q
+    # 4. All transitions reference valid states and symbols
+    # 5. Transition function is TOTAL (complete) over Q × Σ
+```
+
+This catches misconfiguration early and provides clear error messages.
+
+## Technology Choices
+
+| Technology | Purpose | Justification |
+| ---------- | ------- | ------------- |
+| **Python 3.12+** | Core language | Type parameter syntax (`[T: Bound]`), no external dependencies |
+| **Standard Library Only** | Dependencies | Zero runtime dependencies for the FSM engine |
+| **pytest** | Testing | Industry standard, minimal config |
+| **ruff** | Linting/formatting | Fast, single tool for lint + format |
+| **mypy** + **pyright** | Type checking | Strict type safety verification |
+| **pre-commit** | Git hooks | Enforces quality gates before commit |
+| **Docker** | Reproducibility | Consistent environment, no setup required |
 
 ## Public API
 
-App-level entrypoint:
+### High-Level (Modulo-Three)
 
-- `modThree(input: str) -> int`
+```python
+from modulo_three import modThree
 
-Reusable finite machine API:
+result = modThree("1011")  # Returns: 2
+```
 
-- `FiniteMachine[StateT, SymbolT]` in `modulo_three/machine.py`
-  - `run(input_symbols: Iterable[SymbolT]) -> StateT`
-  - `accepts(input_symbols: Iterable[SymbolT]) -> bool`
-  - Use run() when you need the final state (e.g., modulo remainder). Use accepts() when you need an accept/reject verdict.
-- `build_binary_mod_machine(mod: int) -> FiniteMachine[int, str]` in `modulo_three/builder.py`
-- `build_binary_mod_spec(mod: int) -> DeterministicMachineSpec[int, str]` in `modulo_three/builder.py`
-- `DeterministicTableMachineBuilder` + `DeterministicMachineSpec` in `modulo_three/builder.py`
+### Mid-Level (Reusable FSM)
 
-## Deterministic Construction
+```python
+from modulo_three.builder import build_binary_mod_machine
 
-Deterministic machines are constructed from a specification via the
-`DeterministicTableMachineBuilder`. The binary modulo helpers are convenience
-functions that assemble a modulo-specific spec and build it with the same
-builder.
+machine = build_binary_mod_machine(3)  # Modulo-3 machine
+remainder = machine.run("1011")         # Returns: 2
+is_accepted = machine.accepts("1011")  # Returns: True
+```
 
-## FiniteMachine Scope
+### Low-Level (Generic FSM Engine)
 
-This implementation intentionally targets a small, focused subset of finite state machines.
+```python
+from modulo_three.machine import FiniteMachine
+from modulo_three.builder import DeterministicMachineSpec, DeterministicTableMachineBuilder
 
-It supports:
+# Define a machine via configuration
+spec = DeterministicMachineSpec(
+    Q={0, 1, 2},
+    Sigma={"0", "1"},
+    q0=0,
+    F={0, 1, 2},
+    delta={...},  # Complete transition table
+)
 
-- deterministic, table-driven state machines (DFA-style)
-- one transition per (state, symbol)
-- single-pass execution over an input sequence
+# Build and run
+builder = DeterministicTableMachineBuilder()
+machine = builder.from_spec(spec)
+result = machine.run("011")
+```
 
-The goal is to keep the core easy to read, easy to test, and easy to replicate by configuration.
+## Makefile Commands Reference
 
-It does not attempt to support more advanced FSM features (e.g. nondeterminism, state hooks, hierarchical models, or runtime mutation), as they are not required for the intended use cases and would add unnecessary complexity.
+### Docker-Based Commands (Recommended)
 
-## Reusable Example
+| Command | Description | Example |
+| ------- | ----------- | ------- |
+| `make run [ARGS=...]` | Run app via Docker (builds app image) | `make run ARGS=1011` |
+| `make run-dev` | Run with dev image + bind mount | `make run-dev ARGS=1011` |
+| `make test` | Run test suite | `make test` |
+| `make lint` | Run ruff linter | `make lint` |
+| `make format` | Format code with ruff | `make format` |
+| `make typecheck` | Run mypy + pyright | `make typecheck` |
+| `make check` | Run lint + typecheck + tests | `make check` |
+| `make pre-commit` | Run all pre-commit hooks | `make pre-commit` |
+| `make pre-commit-install` | Install git hooks | `make pre-commit-install` |
+| `make build-dev` | Force rebuild dev image | `make build-dev` |
+| `make build` | Build app image | `make build` |
+| `make docs` | List bundled markdown documentation | `make docs` |
 
-The following example builds a non-modulo machine with custom state types:
+### Local Commands (Requires Python 3.12+)
+
+```bash
+# Install dependencies
+pip install -e ".[dev]"
+
+# Run directly (both flags are supported)
+python -m modulo_three 1011
+python -m modulo_three -i
+python -m modulo_three --interactive
+# Exit interactive mode with: exit, quit, or q
+
+# Run tests
+pytest tests
+
+# Type check
+mypy modulo_three tests
+pyright
+
+# Lint
+ruff check modulo_three tests
+ruff format modulo_three tests
+```
+
+## Extensibility Patterns
+
+### Adding a New Modulo Machine
+
+```python
+from modulo_three.builder import build_binary_mod_machine
+
+# Modulo-7 machine (reuses same engine!)
+machine = build_binary_mod_machine(7)
+result = machine.run("101101")  # Returns remainder mod 7
+```
+
+### Custom State Types with Enums
 
 ```python
 from enum import Enum, auto
-
-from modulo_three.builder import (
-    DeterministicMachineSpec,
-    DeterministicTableMachineBuilder,
-)
-
+from modulo_three.builder import DeterministicMachineSpec, DeterministicTableMachineBuilder
 
 class Phase(Enum):
     START = auto()
     MID = auto()
     END = auto()
 
-
-builder = DeterministicTableMachineBuilder[Phase, int]()
-machine = builder.from_spec(
-    DeterministicMachineSpec(
-        Q={Phase.START, Phase.MID, Phase.END},
-        Sigma={0, 1},
-        q0=Phase.START,
-        F={Phase.END},
-        delta={
-            (Phase.START, 1): Phase.MID,
-            (Phase.MID, 0): Phase.END,
-        },
-    )
+spec = DeterministicMachineSpec(
+    Q={Phase.START, Phase.MID, Phase.END},
+    Sigma={0, 1},
+    q0=Phase.START,
+    F={Phase.END},
+    delta={
+        (Phase.START, 1): Phase.MID,
+        (Phase.MID, 0): Phase.END,
+    },
 )
 
-final_state = machine.run([1, 0])
-assert final_state is Phase.END
+machine = DeterministicTableMachineBuilder().from_spec(spec)
 ```
 
-For the modulo-three machine used in this project, see `build_binary_mod_machine`.
+### Custom Base/Modulus Combinations
 
-## Commands
+The built-in helper supports binary (`base=2`) with any modulus (`>= 1`):
 
-App usage:
+```python
+# Build a modulo-5 machine for binary input
+from modulo_three.builder import build_binary_mod_machine
 
-### No venv needed
+machine = build_binary_mod_machine(5)
+```
 
-- `make run` (Docker, interactive mode)
-- `make run ARGS=1011` (Docker, one-shot input)
-- `make run-dev` (Docker dev image + bind mount, interactive mode)
-- `make run-dev ARGS=1011` (Docker dev image + bind mount, one-shot input)
+For non-binary bases, define a `DeterministicMachineSpec` with the right alphabet and transitions, then build it with `DeterministicTableMachineBuilder`.
 
-### Optional local run (without Docker)
-- `python -m modulo_three 1011`
-- `python -m modulo_three --interactive`
+```python
+from modulo_three.builder import DeterministicMachineSpec, DeterministicTableMachineBuilder
 
-Local test commands:
+base = 10
+mod = 5
+states = set(range(mod))
+alphabet = {str(d) for d in range(base)}
+transitions = {
+    (state, digit): (base * state + int(digit)) % mod
+    for state in states
+    for digit in alphabet
+}
 
-- `make test`
-- `make lint`
-- `make format`
-- `make typecheck`
-- `make check`
-- `make pre-commit-install`
-- `make pre-commit`
-- `make docs`
+spec = DeterministicMachineSpec(Q=states, Sigma=alphabet, q0=0, F=states, delta=transitions)
+machine = DeterministicTableMachineBuilder[int, str]().from_spec(spec)
+```
 
-Testing framework:
+## Mathematical Foundation
 
-- `pytest` is the standard and exclusive test runner for this project.
-- New tests should be written as standalone `pytest` tests (functions, fixtures, and plain `assert` statements).
+### FSM State Invariant
 
-Static analysis tooling:
+For a modulo-`N` machine with base `b`:
 
-- `ruff` for linting and formatting checks.
-- `mypy` and `pyright` for static type checking.
-- `pre-commit` for running these checks automatically before commits.
-- `pre-commit` runs lint/type checks on commit and `pytest` on push.
+```text
+state == (value of consumed prefix) mod N
+```
 
-Docker workflow commands:
+This invariant is maintained after each symbol processed. The transition function is:
 
-- `make build-app`
-- `make build-dev`
-- `make run` (defaults to `--interactive`)
-- `make run ARGS=1011`
-- `make run-dev` (defaults to `--interactive`)
-- `make run-dev ARGS=1011`
-- `make test`
-- `make lint`
-- `make format`
-- `make typecheck`
-- `make pre-commit`
+```text
+δ(r, d) = (b * r + d) mod N
+```
 
-Dev image behavior:
+Where:
 
-- Dev commands (`run-dev`, `test`, `lint`, `format`, `typecheck`, `pre-commit`) build the dev image only if it does not exist.
-- Use `make build-dev` to force a refresh after changing dev dependencies or `Dockerfile.dev`.
-- `typecheck` persists pyright's cache under `.cache/pyright-python` to avoid re-downloading Node on every run.
+- `r` = current remainder (state)
+- `d` = next digit (symbol)
+- `b` = base (2 for binary)
+- `N` = modulus
 
-## Testing Scope
+### MSB-First Processing
 
-The following tests are intentionally excluded as overkill for this project stage:
+The machine processes input left-to-right (MSB-first):
 
-- public API smoke tests for package attribute existence
-- command-target wiring tests for `Makefile` and `pyproject.toml`
+```python
+"1011"  # 11 in decimal
+# Process: '1' (8), then '0' (4), then '1' (2), then '1' (1)
+# Result: 8 + 0 + 2 + 1 = 11 → 11 mod 3 = 2
+```
 
-Do not re-add dedicated test modules for those two categories unless the scope changes and this section is updated first.
+## Testing Strategy
 
-Command policy:
+The test suite validates:
 
-- `test-fast` is intentionally removed.
-- Do not add a `test-fast` target or alias back without an explicit scope change and documentation update.
+| Category | Coverage |
+| -------- | -------- |
+| Correctness | All required examples, comprehensive binary strings up to length 8 |
+| Boundary | Empty string, leading zeros, modulus=1, binary alphabet coverage |
+| Invalid Input | Non-string types, invalid characters, digits out of range |
+| Separation | Engine contains no `%` operator (source-level check) |
+| Performance | Long inputs (≥100,000 characters) for streaming verification |
+| Equivalence | FSM results match mathematical recurrence |
+
+See [`tests/`](tests/) for complete coverage.
+
+## File Structure
+
+```text
+modulo-three/
+├── modulo_three/           # Main package
+│   ├── __init__.py        # Public API export
+│   ├── __main__.py        # CLI entrypoint
+│   ├── machine.py         # Generic FSM engine
+│   ├── builder.py         # FSM construction
+│   └── simple_facade.py   # Modulo-three facade
+├── tests/                  # Test suite
+│   ├── test_simple_facade.py
+│   ├── test_machine_*.py
+│   ├── test_builder_*.py
+│   └── conftest.py
+├── Makefile               # Build/test commands
+├── pyproject.toml         # Project config
+├── Dockerfile             # Production image
+├── Dockerfile.dev         # Development image
+└── README.md
+```
+
+## Assumptions and Constraints
+
+1. **Input is MSB-first binary strings** (as specified)
+2. **No external dependencies** for runtime execution
+3. **No integer conversion** of the full input string
+4. **Pure lookup** in the FSM engine (no `%` operator)
+5. **Runtime validation** catches configuration errors early
