@@ -8,6 +8,8 @@ from typing import Any, TypedDict, cast
 import pytest
 from modulo_three.machine import FiniteMachine
 
+from tests._machine_assertions import assert_machine_definition
+
 type MachineFactory = Callable[
     [set[Any], set[Any], Any, set[Any], Mapping[tuple[Any, Any], Any]],
     FiniteMachine[Any, Any],
@@ -71,11 +73,14 @@ def test_fields_exist_and_are_readable(
     valid_machine: FiniteMachine[int, str],
     valid_machine_args: IntStrMachineArgs,
 ) -> None:
-    assert valid_machine_args["Q"] == valid_machine.Q
-    assert valid_machine_args["Sigma"] == valid_machine.Sigma
-    assert valid_machine_args["q0"] == valid_machine.q0
-    assert valid_machine_args["F"] == valid_machine.F
-    assert valid_machine_args["delta"] == valid_machine.delta
+    assert_machine_definition(
+        valid_machine,
+        Q=valid_machine_args["Q"],
+        Sigma=valid_machine_args["Sigma"],
+        q0=valid_machine_args["q0"],
+        F=valid_machine_args["F"],
+        delta=valid_machine_args["delta"],
+    )
 
 
 def test_init_copies_input_collections(
@@ -96,17 +101,21 @@ def test_init_copies_input_collections(
     args["F"].add(3)
     args["delta"][(0, "c")] = 0
 
-    assert machine.Q == {0, 1, 2}
-    assert machine.Sigma == {"a", "b"}
-    assert machine.F == {0, 2}
-    assert dict(machine.delta) == {
-        (0, "a"): 1,
-        (0, "b"): 0,
-        (1, "a"): 2,
-        (1, "b"): 2,
-        (2, "a"): 0,
-        (2, "b"): 1,
-    }
+    assert_machine_definition(
+        machine,
+        Q={0, 1, 2},
+        Sigma={"a", "b"},
+        q0=0,
+        F={0, 2},
+        delta={
+            (0, "a"): 1,
+            (0, "b"): 0,
+            (1, "a"): 2,
+            (1, "b"): 2,
+            (2, "a"): 0,
+            (2, "b"): 1,
+        },
+    )
 
 
 INVALID_DEFINITION_CASES: list[tuple[dict[str, Any], str]] = [

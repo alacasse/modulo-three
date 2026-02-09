@@ -2,14 +2,24 @@
 
 from __future__ import annotations
 
-import importlib
 from collections.abc import Callable
 from itertools import product
 
 import modulo_three.simple_facade as simple_facade_module
 import pytest
+from modulo_three.builder import build_binary_mod_machine
 from modulo_three.machine import FiniteMachine
 from modulo_three.simple_facade import modThree
+
+MIN_LENGTH = 1
+MAX_LENGTH = 8
+
+
+def _reference_mod_three(binary_string: str) -> int:
+    remainder = 0
+    for char in binary_string:
+        remainder = (2 * remainder + int(char)) % 3
+    return remainder
 
 
 @pytest.mark.parametrize(
@@ -43,34 +53,29 @@ def test_mod_three_rejects_invalid_symbol() -> None:
 
 
 def test_mod_three_reuses_cached_machine(monkeypatch: pytest.MonkeyPatch) -> None:
-    facade = importlib.reload(simple_facade_module)
+    cache_factory = simple_facade_module.__dict__["_get_mod_three_machine"]
+    cache_factory.cache_clear()
     build_count = 0
-    original_build: Callable[[int], FiniteMachine[int, str]] = facade.build_binary_mod_machine
+    original_build: Callable[[int], FiniteMachine[int, str]] = build_binary_mod_machine
 
     def counting_build(config: int) -> FiniteMachine[int, str]:
         nonlocal build_count
         build_count += 1
         return original_build(config)
 
-    monkeypatch.setattr(facade, "build_binary_mod_machine", counting_build)
+    monkeypatch.setattr(simple_facade_module, "build_binary_mod_machine", counting_build)
+    try:
+        assert 2 == simple_facade_module.modThree("1011")
+        assert 1 == simple_facade_module.modThree("1101")
+        assert 1 == build_count
+    finally:
+        cache_factory.cache_clear()
 
-    assert 2 == facade.modThree("1011")
-    assert 1 == facade.modThree("1101")
-    assert 1 == build_count
 
-
-def test_mod_three_produces_correct_result_for_all_binary_strings_of_length_1_to_8() -> None:
-    """Verify modThree matches the mathematical formula for all binary inputs of length 1 to 8."""
-
-    def reference_mod_three(binary_string: str) -> int:
-        remainder = 0
-        for char in binary_string:
-            remainder = (2 * remainder + int(char)) % 3
-        return remainder
-
-    assert all(
-        modThree(binary) == reference_mod_three(binary)
-        for length in range(1, 9)
-        for bits in product("01", repeat=length)
-        for binary in ["".join(bits)]
-    )
+@pytest.mark.parametrize("input_length", range(MIN_LENGTH, MAX_LENGTH + 1))
+def test_mod_three_matches_reference_for_all_binary_strings_by_length(
+    input_length: int,
+) -> None:
+    for bits in product("01", repeat=input_length):
+        binary = "".join(bits)
+        assert modThree(binary) == _reference_mod_three(binary)

@@ -14,7 +14,7 @@ type MachineFactory = Callable[
 ]
 
 
-def test_init_raises_when_delta_is_empty_for_non_empty_q_and_sigma(
+def test_delta_must_be_total(
     machine_factory: MachineFactory,
 ) -> None:
     with pytest.raises(
@@ -176,7 +176,7 @@ def test_accepts_empty_string_false_when_q0_is_not_accepting(
 
 
 @pytest.mark.parametrize(
-    ("state", "symbol", "expected"),
+    ("from_state", "input_symbol", "expected_next_state"),
     [
         (0, "a", 1),
         (1, "b", 0),
@@ -184,11 +184,11 @@ def test_accepts_empty_string_false_when_q0_is_not_accepting(
 )
 def test_step_returns_next_state(
     ab_step_machine: FiniteMachine[int, str],
-    state: int,
-    symbol: str,
-    expected: int,
+    from_state: int,
+    input_symbol: str,
+    expected_next_state: int,
 ) -> None:
-    assert ab_step_machine.step(state, symbol) == expected
+    assert ab_step_machine.step(from_state, input_symbol) == expected_next_state
 
 
 def test_step_raises_value_error_for_invalid_symbol_without_index(

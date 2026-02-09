@@ -1,4 +1,4 @@
-"""Tests for binary transition graph construction."""
+"""Tests for binary modulo-machine construction and transition coverage."""
 
 from __future__ import annotations
 
