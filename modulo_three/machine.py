@@ -16,14 +16,17 @@ Type Parameters:
     SymbolT: The type of input symbols. Must be hashable for validation and dict keys.
 
 Example:
-    A simple parity machine that tracks whether the count of 1-bits is even or odd::
+    A simple parity machine over {'0', '1'} that tracks whether the count
+    of 1-bits is even or odd::
 
         from modulo_three.machine import FiniteMachine
 
         states = {0, 1}  # 0 = even, 1 = odd
-        alphabet = {'1'}  # Only track '1' bits
+        alphabet = {'0', '1'}
         transitions = {
+            (0, '0'): 0,
             (0, '1'): 1,
+            (1, '0'): 1,
             (1, '1'): 0,
         }
         machine = FiniteMachine(
@@ -35,6 +38,7 @@ Example:
         )
         assert machine.run(['1', '1']) == 0  # even
         assert machine.run(['1']) == 1  # odd
+        assert machine.run(['1', '0']) == 1  # odd, '0' is valid input
 """
 
 from __future__ import annotations
