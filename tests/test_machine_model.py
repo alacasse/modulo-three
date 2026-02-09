@@ -8,7 +8,10 @@ from typing import Any, TypedDict, cast
 import pytest
 from modulo_three.machine import FiniteMachine
 
-from tests._machine_assertions import assert_machine_definition
+from tests._machine_assertions import (
+    assert_machine_definition,
+    assert_machine_is_snapshot_of_inputs_after_mutation,
+)
 
 type MachineFactory = Callable[
     [set[Any], set[Any], Any, set[Any], Mapping[tuple[Any, Any], Any]],
@@ -96,25 +99,17 @@ def test_init_copies_input_collections(
         args["delta"],
     )
 
-    args["Q"].add(3)
-    args["Sigma"].add("c")
-    args["F"].add(3)
-    args["delta"][(0, "c")] = 0
-
-    assert_machine_definition(
+    assert_machine_is_snapshot_of_inputs_after_mutation(
         machine,
-        Q={0, 1, 2},
-        Sigma={"a", "b"},
-        q0=0,
-        F={0, 2},
-        delta={
-            (0, "a"): 1,
-            (0, "b"): 0,
-            (1, "a"): 2,
-            (1, "b"): 2,
-            (2, "a"): 0,
-            (2, "b"): 1,
-        },
+        source_states=args["Q"],
+        source_symbols=args["Sigma"],
+        source_accepting_states=args["F"],
+        source_transitions=args["delta"],
+        state_to_add=3,
+        symbol_to_add="c",
+        accepting_state_to_add=3,
+        transition_key_to_add=(0, "c"),
+        transition_value_to_add=0,
     )
 
 

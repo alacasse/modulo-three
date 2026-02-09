@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import pytest
-from modulo_three.builder import build_binary_mod_spec
+from modulo_three.builder import build_binary_mod_machine, build_binary_mod_spec
+from modulo_three.machine import FiniteMachine
+
+LARGE_MOD = 10_000
 
 
 @pytest.mark.parametrize("mod", [True, False])
@@ -44,9 +47,47 @@ def test_mod_one_builds_single_state_spec() -> None:
 
 
 def test_large_mod_builds_expected_state_and_transition_counts() -> None:
-    large_mod = 10_000
+    spec = build_binary_mod_spec(LARGE_MOD)
 
-    spec = build_binary_mod_spec(large_mod)
+    assert len(spec.Q) == LARGE_MOD
+    assert len(spec.delta) == LARGE_MOD * 2
 
-    assert len(spec.Q) == large_mod
-    assert len(spec.delta) == large_mod * 2
+
+def test_build_binary_mod_machine_returns_finite_machine() -> None:
+    machine = build_binary_mod_machine(3)
+
+    assert isinstance(machine, FiniteMachine)
+
+
+def test_build_binary_mod_machine_mod_2_produces_correct_transitions() -> None:
+    machine = build_binary_mod_machine(2)
+
+    assert machine.Q == {0, 1}
+    assert machine.Sigma == {"0", "1"}
+    assert machine.q0 == 0
+    assert machine.F == {0, 1}
+    assert dict(machine.delta) == {
+        (0, "0"): 0,
+        (0, "1"): 1,
+        (1, "0"): 0,
+        (1, "1"): 1,
+    }
+
+
+def test_build_binary_mod_machine_mod_4_produces_correct_transitions() -> None:
+    machine = build_binary_mod_machine(4)
+
+    assert machine.Q == {0, 1, 2, 3}
+    assert machine.Sigma == {"0", "1"}
+    assert machine.q0 == 0
+    assert machine.F == {0, 1, 2, 3}
+    assert dict(machine.delta) == {
+        (0, "0"): 0,
+        (0, "1"): 1,
+        (1, "0"): 2,
+        (1, "1"): 3,
+        (2, "0"): 0,
+        (2, "1"): 1,
+        (3, "0"): 2,
+        (3, "1"): 3,
+    }

@@ -10,7 +10,10 @@ from modulo_three.builder import (
     DeterministicTableMachineBuilder,
 )
 
-from tests._machine_assertions import assert_machine_definition
+from tests._machine_assertions import (
+    assert_machine_definition,
+    assert_machine_is_snapshot_of_inputs_after_mutation,
+)
 
 
 class Phase(Enum):
@@ -77,22 +80,21 @@ def test_table_builder_copies_input_collections(
         )
     )
 
-    states.add("C")
-    symbols.add("y")
-    accepting_states.add("C")
-    transitions[("A", "y")] = "A"
-
-    assert_machine_definition(
+    assert_machine_is_snapshot_of_inputs_after_mutation(
         machine,
-        Q={"A", "B"},
-        Sigma={"x"},
-        q0="A",
-        F={"B"},
-        delta={("A", "x"): "B", ("B", "x"): "A"},
+        source_states=states,
+        source_symbols=symbols,
+        source_accepting_states=accepting_states,
+        source_transitions=transitions,
+        state_to_add="C",
+        symbol_to_add="y",
+        accepting_state_to_add="C",
+        transition_key_to_add=("A", "y"),
+        transition_value_to_add="A",
     )
 
 
-def test_table_builder_machine_is_stable_after_spec_is_mutated_post_build(
+def test_machine_is_independent_of_spec_after_build(
     string_builder: DeterministicTableMachineBuilder[str, str],
 ) -> None:
     transitions = {("A", "x"): "B", ("B", "x"): "A"}

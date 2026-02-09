@@ -97,6 +97,21 @@ def test_builder_rejects_spec_when_delta_uses_symbol_outside_sigma(
         table_builder.from_spec(spec)
 
 
+def test_spec_rejects_empty_Q(
+    table_builder: DeterministicTableMachineBuilder[int, str],
+) -> None:
+    spec = DeterministicMachineSpec(
+        Q=set[int](),
+        Sigma={"a"},
+        q0=0,
+        F={0},
+        delta={(0, "a"): 0},
+    )
+
+    with pytest.raises(ValueError, match=r"Q must be non-empty"):
+        table_builder.from_spec(spec)
+
+
 def test_builder_rejects_spec_when_delta_is_not_total(
     table_builder: DeterministicTableMachineBuilder[int, str],
 ) -> None:
