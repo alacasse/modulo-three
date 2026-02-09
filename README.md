@@ -38,6 +38,8 @@ The `DeterministicTableMachineBuilder` and its associated tests are **primarily 
 - Explicit transition tables
 - Arbitrary hashable state and symbol types
 
+`DeterministicMachineSpec` is a mutable dataclass for ease of experimentation; builders copy input collections when constructing a machine so later mutations do not affect the built machine.
+
 The test suite for this builder (`tests/test_table_builder.py`) serves as documentation for this flexibility rather than as tests for production code.
 
 ## FiniteMachine Scope

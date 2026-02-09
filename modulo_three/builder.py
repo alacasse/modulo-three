@@ -16,25 +16,26 @@ The binary modulo machine is provided via :func:`build_binary_mod_spec` and
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Hashable, Mapping
+from collections.abc import Hashable, MutableMapping
 from dataclasses import dataclass
 
 from modulo_three.machine import FiniteMachine
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(slots=True)
 class DeterministicMachineSpec[StateT: Hashable, SymbolT: Hashable]:
     """Definition object for constructing deterministic finite machines.
 
     This class is primarily used to demonstrate the flexibility of the Builder
     pattern. See :class:`DeterministicTableMachineBuilder` for usage examples.
+    It is intentionally mutable to keep test setup and experimentation lightweight.
     """
 
     Q: set[StateT]
     Sigma: set[SymbolT]
     q0: StateT
     F: set[StateT]
-    delta: Mapping[tuple[StateT, SymbolT], StateT]
+    delta: MutableMapping[tuple[StateT, SymbolT], StateT]
 
 
 class MachineBuilder[StateT: Hashable, SymbolT: Hashable](ABC):
