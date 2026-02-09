@@ -90,6 +90,8 @@ App usage:
 
 - `make run` (Docker, interactive mode)
 - `make run ARGS=1011` (Docker, one-shot input)
+- `make run-dev` (Docker dev image + bind mount, interactive mode)
+- `make run-dev ARGS=1011` (Docker dev image + bind mount, one-shot input)
 
 ### Optional local run (without Docker)
 - `python -m modulo_three 1011`
@@ -124,6 +126,8 @@ Docker workflow commands:
 - `make build-dev`
 - `make run` (defaults to `--interactive`)
 - `make run ARGS=1011`
+- `make run-dev` (defaults to `--interactive`)
+- `make run-dev ARGS=1011`
 - `make test`
 - `make lint`
 - `make format`
