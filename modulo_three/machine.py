@@ -174,11 +174,8 @@ class FiniteMachine[StateT: Hashable, SymbolT: Hashable]:
                 for symbol in self.Sigma
                 if (state, symbol) not in self.delta
             ]
-            if missing:
-                suffix = " (truncated)" if len(missing) > 10 else ""
-                details = f"missing={missing[:10]!r}{suffix}"
-            else:
-                details = "delta size mismatch"
+            suffix = " (truncated)" if len(missing) > 10 else ""
+            details = f"missing={missing[:10]!r}{suffix}"
             raise ValueError(
                 "delta must be total over QxSigma: "
                 f"expected={expected_count}, actual={len(self.delta)}; {details}"
