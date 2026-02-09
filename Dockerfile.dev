@@ -2,12 +2,26 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+ARG DEV_FINGERPRINT=unknown
+LABEL org.modulo-three.dev-fingerprint=$DEV_FINGERPRINT
+
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends libatomic1 \
 	&& rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml .
 
-RUN python -c 'import subprocess, tomllib; deps = tomllib.load(open("pyproject.toml", "rb"))["project"]["optional-dependencies"]["dev"]; subprocess.check_call(["pip", "install", "--no-cache-dir", *deps])'
+RUN python - <<'PY'
+import subprocess
+import tomllib
+
+deps = tomllib.load(open("pyproject.toml", "rb"))["project"]["optional-dependencies"]
+wanted = sorted(set(deps.get("dev", []) + deps.get("test", [])))
+if wanted:
+    subprocess.check_call(["pip", "install", "--no-cache-dir", *wanted])
+PY
+
+COPY modulo_three/ modulo_three/
+COPY tests/ tests/
 
 CMD ["bash"]

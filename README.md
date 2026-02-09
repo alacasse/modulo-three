@@ -189,20 +189,38 @@ result = machine.run("011")
 
 ### Docker-Based Commands (Recommended)
 
-| Command | Description | Example |
-| ------- | ----------- | ------- |
-| `make run [ARGS=...]` | Run app via Docker (builds app image) | `make run ARGS=1011` |
-| `make run-dev` | Run with dev image + bind mount | `make run-dev ARGS=1011` |
-| `make test` | Run test suite | `make test` |
-| `make lint` | Run ruff linter | `make lint` |
-| `make format` | Format code with ruff | `make format` |
-| `make typecheck` | Run mypy + pyright | `make typecheck` |
-| `make check` | Run lint + typecheck + tests | `make check` |
-| `make pre-commit` | Run all pre-commit hooks | `make pre-commit` |
-| `make pre-commit-install` | Install git hooks | `make pre-commit-install` |
-| `make build-dev` | Force rebuild dev image | `make build-dev` |
-| `make build` | Build app image | `make build` |
-| `make docs` | List bundled markdown documentation | `make docs` |
+All Make targets currently defined in `Makefile`:
+
+| Target | Purpose | Notes / Example |
+| ------ | ------- | --------------- |
+| `make ensure-dev-image` | Ensures the dev image exists and is up to date | Compares a fingerprint from `pyproject.toml` + `Dockerfile.dev`; rebuilds only if changed |
+| `make build-dev` | Builds the dev image | `make build-dev` |
+| `make build` | Builds the app image from `Dockerfile` | `make build` |
+| `make run ARGS=...` | Runs the app image | Builds app image first (`make build`), example: `make run ARGS=1011` |
+| `make run-dev ARGS=...` | Runs app in dev container with source bind-mounted | Ensures dev image first, example: `make run-dev ARGS=1011` |
+| `make test` | Runs pytest in dev container | Equivalent container command: `pytest -q tests` |
+| `make lint` | Runs Ruff lint checks | Equivalent container command: `ruff check modulo_three tests` |
+| `make format` | Runs Ruff formatter | Equivalent container command: `ruff format modulo_three tests` |
+| `make typecheck` | Runs static type checks | Runs `mypy modulo_three tests && pyright` in dev container |
+| `make check` | Runs full quality gate | Executes `lint`, `typecheck`, and `test` |
+| `make pre-commit-install` | Installs git hooks through pre-commit | Installs `pre-commit` and `pre-push` hooks |
+| `make pre-commit` | Runs all pre-commit hooks | Uses cached hook environment under `.cache/pre-commit` |
+| `make docs` | Lists bundled markdown docs | Prints `README.md` and markdown files in `docs/` |
+
+### Pre-commit Workflow
+
+Use these two targets together:
+
+1. Run `make pre-commit-install` once after cloning the repository (or again after hook config changes).
+2. Run `make pre-commit` anytime you want to manually run all pre-commit-stage hooks against the full repo.
+3. Commit normally with `git commit`; installed `pre-commit` hooks run automatically.
+4. Push normally with `git push`; installed `pre-push` hooks run automatically.
+
+Current hook behavior in this repository:
+
+- `pre-commit` stage runs lint and type checks.
+- `pre-push` stage runs `pytest`.
+- Hook entries point to `.venv/bin/...`, so make sure the local virtual environment exists and dependencies are installed (for example, `pip install -e ".[dev]"`).
 
 ### Local Commands (Requires Python 3.12+)
 

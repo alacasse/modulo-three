@@ -4,16 +4,18 @@ ARGS       ?= --interactive
 DOCKER_TTY := $(shell if [ -t 0 ] && [ -t 1 ]; then echo -it; else echo -i; fi)
 PRE_COMMIT_HOME ?= $(CURDIR)/.cache/pre-commit
 PYRIGHT_CACHE_HOME ?= $(CURDIR)/.cache/pyright-python
+DEV_FINGERPRINT := $(shell cat pyproject.toml Dockerfile.dev | sha256sum | cut -d' ' -f1)
 
 .PHONY: ensure-dev-image build-dev build run run-dev test lint format typecheck check pre-commit-install pre-commit docs
 
 ensure-dev-image:
-	@if ! docker image inspect $(DEV_IMAGE) >/dev/null 2>&1; then \
+	@current=$$(docker image inspect -f '{{ index .Config.Labels "org.modulo-three.dev-fingerprint" }}' $(DEV_IMAGE) 2>/dev/null || true); \
+	if [ "$$current" != "$(DEV_FINGERPRINT)" ]; then \
 		$(MAKE) build-dev; \
 	fi
 
 build-dev:
-	docker build -t $(DEV_IMAGE) -f Dockerfile.dev .
+	docker build --build-arg DEV_FINGERPRINT=$(DEV_FINGERPRINT) -t $(DEV_IMAGE) -f Dockerfile.dev .
 
 build:
 	docker build -t $(APP_IMAGE) -f Dockerfile .
