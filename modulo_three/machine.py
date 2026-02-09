@@ -112,6 +112,14 @@ class FiniteMachine[StateT: Hashable, SymbolT: Hashable]:
             current_state = self.delta[transition_key]
         return current_state
 
+    def accepts(self, input_symbols: Iterable[SymbolT]) -> bool:
+        """Return True if the input is accepted by the machine.
+
+        A DFA accepts input when the final state after processing the input
+        belongs to the accepting set F.
+        """
+        return self.run(input_symbols) in self.F
+
     def _validate_definition(self) -> None:
         """Validate the mathematical constraints of a finite automaton.
 

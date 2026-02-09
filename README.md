@@ -16,6 +16,8 @@ Reusable finite machine API:
 
 - `FiniteMachine[StateT, SymbolT]` in `modulo_three/machine.py`
   - `run(input_symbols: Iterable[SymbolT]) -> StateT`
+  - `accepts(input_symbols: Iterable[SymbolT]) -> bool`
+  - Use run() when you need the final state (e.g., modulo remainder). Use accepts() when you need an accept/reject verdict.
 - `BinaryModFiniteMachineBuilder` in `modulo_three/builder.py` **(primary implementation)**
 - `DeterministicTableMachineBuilder` + `DeterministicMachineSpec` in `modulo_three/builder.py` *(demonstration only)*
 
@@ -39,20 +41,17 @@ The test suite for this builder (`tests/test_table_builder.py`) serves as docume
 
 ## FiniteMachine Scope
 
-Intended to support:
+This implementation intentionally targets a small, focused subset of finite state machines.
 
-- static deterministic finite machines (DFA-style) with hashable states/symbols
-- table-driven transitions from `(state, symbol)` to exactly one next state
-- single-pass processing of an input sequence to produce a final state
+It supports:
 
-Not intended to support:
+- deterministic, table-driven state machines (DFA-style)
+- one transition per (state, symbol)
+- single-pass execution over an input sequence
 
-- nondeterminism (NFA), epsilon transitions, or probabilistic branching
-- guarded/contextual transitions (timers, external state checks, payload-aware events)
-- runtime mutation of machine structure (`add_state`, `add_transition`, hot-reload updates)
-- state behavior hooks (entry/exit actions, transition callbacks, metrics/listeners)
-- hierarchical/composite/parallel state models (statecharts/HFSM semantics)
-- built-in import/export or interoperability formats (DOT/SCXML/JSON schemas)
+The goal is to keep the core easy to read, easy to test, and easy to replicate by configuration.
+
+It does not attempt to support more advanced FSM features (e.g. nondeterminism, state hooks, hierarchical models, or runtime mutation), as they are not required for the intended use cases and would add unnecessary complexity.
 
 ## Reusable Example (Demonstration)
 

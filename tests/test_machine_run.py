@@ -60,3 +60,31 @@ def test_run_returns_non_int_state_type() -> None:
     )
 
     assert "END" == machine.run("ab")
+
+
+def test_accepts_returns_true_when_final_state_is_accepting() -> None:
+    machine = FiniteMachine(
+        Q={0, 1},
+        Sigma={"a"},
+        q0=0,
+        F={1},
+        delta={
+            (0, "a"): 1,
+        },
+    )
+
+    assert machine.accepts("a") is True
+
+
+def test_accepts_returns_false_when_final_state_is_not_accepting() -> None:
+    machine = FiniteMachine(
+        Q={0, 1},
+        Sigma={"a"},
+        q0=0,
+        F={1},
+        delta={
+            (0, "a"): 0,
+        },
+    )
+
+    assert machine.accepts("a") is False
