@@ -84,3 +84,46 @@ def test_table_builder_copies_input_collections(
     assert machine.Sigma == {"x"}
     assert machine.F == {"B"}
     assert dict(machine.delta) == {("A", "x"): "B", ("B", "x"): "A"}
+
+
+def test_table_builder_machine_is_stable_after_spec_is_mutated_post_build(
+    string_builder: DeterministicTableMachineBuilder[str, str],
+) -> None:
+    transitions = {("A", "x"): "B", ("B", "x"): "A"}
+    spec = DeterministicMachineSpec(
+        Q={"A", "B"},
+        Sigma={"x"},
+        q0="A",
+        F={"B"},
+        delta=transitions,
+    )
+    machine = string_builder.from_spec(spec)
+
+    initial_states = set(machine.Q)
+    initial_symbols = set(machine.Sigma)
+    initial_accepting = set(machine.F)
+    initial_transitions = dict(machine.delta)
+
+    spec.Q.add("C")
+    spec.Q.remove("B")
+    spec.Sigma.add("y")
+    spec.Sigma.remove("x")
+    spec.F.clear()
+    spec.F.add("A")
+    transitions[("A", "x")] = "A"
+    transitions[("B", "x")] = "B"
+    transitions[("A", "y")] = "C"
+
+    assert spec.Q == {"A", "C"}
+    assert spec.Sigma == {"y"}
+    assert spec.F == {"A"}
+    assert dict(spec.delta) == {
+        ("A", "x"): "A",
+        ("B", "x"): "B",
+        ("A", "y"): "C",
+    }
+
+    assert machine.Q == initial_states
+    assert machine.Sigma == initial_symbols
+    assert machine.F == initial_accepting
+    assert dict(machine.delta) == initial_transitions
