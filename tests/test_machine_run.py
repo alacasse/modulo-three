@@ -2,46 +2,37 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
+from typing import Any
+
 import pytest
 from modulo_three.machine import FiniteMachine
 
-
-def _step_machine() -> FiniteMachine[int, str]:
-    return FiniteMachine(
-        Q={0, 1},
-        Sigma={"a", "b"},
-        q0=0,
-        F={0, 1},
-        delta={
-            (0, "a"): 1,
-            (0, "b"): 0,
-            (1, "a"): 1,
-            (1, "b"): 0,
-        },
-    )
+type MachineFactory = Callable[
+    [set[Any], set[Any], Any, set[Any], Mapping[tuple[Any, Any], Any]],
+    FiniteMachine[Any, Any],
+]
 
 
-def test_init_raises_when_delta_is_empty_for_non_empty_q_and_sigma() -> None:
+def test_init_raises_when_delta_is_empty_for_non_empty_q_and_sigma(
+    machine_factory: MachineFactory,
+) -> None:
     with pytest.raises(
         ValueError,
         match=r"delta must be total over QxSigma: expected=6, actual=0",
     ):
-        FiniteMachine(
-            Q={0, 1, 2},
-            Sigma={"a", "b"},
-            q0=1,
-            F={0, 1, 2},
-            delta={},
-        )
+        machine_factory({0, 1, 2}, {"a", "b"}, 1, {0, 1, 2}, {})
 
 
-def test_simple_deterministic_trace_returns_final_state() -> None:
-    machine = FiniteMachine(
-        Q={0, 1, 2},
-        Sigma={"a", "b"},
-        q0=0,
-        F={0, 1, 2},
-        delta={
+def test_simple_deterministic_trace_returns_final_state(
+    machine_factory: MachineFactory,
+) -> None:
+    machine = machine_factory(
+        {0, 1, 2},
+        {"a", "b"},
+        0,
+        {0, 1, 2},
+        {
             (0, "a"): 1,
             (0, "b"): 0,
             (1, "a"): 1,
@@ -54,13 +45,13 @@ def test_simple_deterministic_trace_returns_final_state() -> None:
     assert 2 == machine.run("ab")
 
 
-def test_run_supports_non_string_symbols() -> None:
-    machine = FiniteMachine(
-        Q={0, 1, 2},
-        Sigma={0, 1},
-        q0=0,
-        F={0, 1, 2},
-        delta={
+def test_run_supports_non_string_symbols(machine_factory: MachineFactory) -> None:
+    machine = machine_factory(
+        {0, 1, 2},
+        {0, 1},
+        0,
+        {0, 1, 2},
+        {
             (0, 0): 1,
             (0, 1): 0,
             (1, 0): 1,
@@ -73,13 +64,13 @@ def test_run_supports_non_string_symbols() -> None:
     assert 2 == machine.run([0, 1])
 
 
-def test_run_returns_non_int_state_type() -> None:
-    machine = FiniteMachine(
-        Q={"START", "MID", "END"},
-        Sigma={"a", "b"},
-        q0="START",
-        F={"END"},
-        delta={
+def test_run_returns_non_int_state_type(machine_factory: MachineFactory) -> None:
+    machine = machine_factory(
+        {"START", "MID", "END"},
+        {"a", "b"},
+        "START",
+        {"END"},
+        {
             ("START", "a"): "MID",
             ("START", "b"): "START",
             ("MID", "a"): "MID",
@@ -92,13 +83,15 @@ def test_run_returns_non_int_state_type() -> None:
     assert "END" == machine.run("ab")
 
 
-def test_accepts_returns_true_when_final_state_is_accepting() -> None:
-    machine = FiniteMachine(
-        Q={0, 1},
-        Sigma={"a"},
-        q0=0,
-        F={1},
-        delta={
+def test_accepts_returns_true_when_final_state_is_accepting(
+    machine_factory: MachineFactory,
+) -> None:
+    machine = machine_factory(
+        {0, 1},
+        {"a"},
+        0,
+        {1},
+        {
             (0, "a"): 1,
             (1, "a"): 1,
         },
@@ -107,13 +100,15 @@ def test_accepts_returns_true_when_final_state_is_accepting() -> None:
     assert machine.accepts("a") is True
 
 
-def test_accepts_returns_false_when_final_state_is_not_accepting() -> None:
-    machine = FiniteMachine(
-        Q={0, 1},
-        Sigma={"a"},
-        q0=0,
-        F={1},
-        delta={
+def test_accepts_returns_false_when_final_state_is_not_accepting(
+    machine_factory: MachineFactory,
+) -> None:
+    machine = machine_factory(
+        {0, 1},
+        {"a"},
+        0,
+        {1},
+        {
             (0, "a"): 0,
             (1, "a"): 1,
         },
@@ -122,15 +117,24 @@ def test_accepts_returns_false_when_final_state_is_not_accepting() -> None:
     assert machine.accepts("a") is False
 
 
-def test_step_returns_next_state() -> None:
-    machine = _step_machine()
+@pytest.mark.parametrize(
+    ("state", "symbol", "expected"),
+    [
+        (0, "a", 1),
+        (1, "b", 0),
+    ],
+)
+def test_step_returns_next_state(
+    ab_step_machine: FiniteMachine[int, str],
+    state: int,
+    symbol: str,
+    expected: int,
+) -> None:
+    assert ab_step_machine.step(state, symbol) == expected
 
-    assert machine.step(0, "a") == 1
-    assert machine.step(1, "b") == 0
 
-
-def test_step_raises_value_error_for_invalid_symbol_without_index() -> None:
-    machine = _step_machine()
-
+def test_step_raises_value_error_for_invalid_symbol_without_index(
+    ab_step_machine: FiniteMachine[int, str],
+) -> None:
     with pytest.raises(ValueError, match=r"invalid symbol: 'z'"):
-        machine.step(0, "z")
+        ab_step_machine.step(0, "z")

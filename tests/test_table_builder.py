@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from enum import Enum, auto
 
+import pytest
 from modulo_three.builder import (
     DeterministicMachineSpec,
     DeterministicTableMachineBuilder,
@@ -16,9 +17,14 @@ class Phase(Enum):
     END = auto()
 
 
-def test_table_builder_supports_non_modulo_state_and_symbol_types() -> None:
-    builder: DeterministicTableMachineBuilder[Phase, int] = DeterministicTableMachineBuilder()
-    spec = DeterministicMachineSpec(
+@pytest.fixture
+def phase_builder() -> DeterministicTableMachineBuilder[Phase, int]:
+    return DeterministicTableMachineBuilder()
+
+
+@pytest.fixture
+def phase_spec() -> DeterministicMachineSpec[Phase, int]:
+    return DeterministicMachineSpec(
         Q={Phase.START, Phase.MID, Phase.END},
         Sigma={0, 1},
         q0=Phase.START,
@@ -33,20 +39,33 @@ def test_table_builder_supports_non_modulo_state_and_symbol_types() -> None:
         },
     )
 
-    machine = builder.from_spec(spec)
+
+@pytest.fixture
+def string_builder() -> DeterministicTableMachineBuilder[str, str]:
+    return DeterministicTableMachineBuilder()
+
+
+@pytest.fixture
+def string_spec_inputs() -> tuple[set[str], set[str], set[str], dict[tuple[str, str], str]]:
+    return {"A", "B"}, {"x"}, {"B"}, {("A", "x"): "B", ("B", "x"): "A"}
+
+
+def test_table_builder_supports_non_modulo_state_and_symbol_types(
+    phase_builder: DeterministicTableMachineBuilder[Phase, int],
+    phase_spec: DeterministicMachineSpec[Phase, int],
+) -> None:
+    machine = phase_builder.from_spec(phase_spec)
 
     assert machine.q0 == Phase.START
     assert machine.run([1, 0]) == Phase.END
 
 
-def test_table_builder_copies_input_collections() -> None:
-    states = {"A", "B"}
-    symbols = {"x"}
-    accepting_states = {"B"}
-    transitions = {("A", "x"): "B", ("B", "x"): "A"}
-
-    builder: DeterministicTableMachineBuilder[str, str] = DeterministicTableMachineBuilder()
-    machine = builder.from_spec(
+def test_table_builder_copies_input_collections(
+    string_builder: DeterministicTableMachineBuilder[str, str],
+    string_spec_inputs: tuple[set[str], set[str], set[str], dict[tuple[str, str], str]],
+) -> None:
+    states, symbols, accepting_states, transitions = string_spec_inputs
+    machine = string_builder.from_spec(
         DeterministicMachineSpec(
             Q=states,
             Sigma=symbols,

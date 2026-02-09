@@ -24,6 +24,17 @@ class DummyBuilder(DeterministicMachineBuilder[int, str]):
         )
 
 
+@pytest.fixture
+def singleton_spec() -> DeterministicMachineSpec[int, str]:
+    return DeterministicMachineSpec(
+        Q={0},
+        Sigma={"a"},
+        q0=0,
+        F={0},
+        delta={(0, "a"): 0},
+    )
+
+
 def test_base_builder_is_abstract() -> None:
     builder_cls = cast(Any, DeterministicMachineBuilder[int, str])
     with pytest.raises(TypeError):
@@ -36,14 +47,9 @@ def test_concrete_builder_must_implement_from_spec() -> None:
         missing_builder_cls()
 
 
-def test_concrete_builder_can_construct_finite_machine() -> None:
+def test_concrete_builder_can_construct_finite_machine(
+    singleton_spec: DeterministicMachineSpec[int, str],
+) -> None:
     builder = DummyBuilder()
-    spec = DeterministicMachineSpec(
-        Q={0},
-        Sigma={"a"},
-        q0=0,
-        F={0},
-        delta={(0, "a"): 0},
-    )
-    machine = builder.from_spec(spec)
+    machine = builder.from_spec(singleton_spec)
     assert isinstance(machine, FiniteMachine)
