@@ -5,38 +5,45 @@ from __future__ import annotations
 from typing import Any, cast
 
 import pytest
-from modulo_three.builder import FiniteMachineBuilder
+from modulo_three.builder import DeterministicMachineSpec, MachineBuilder
 from modulo_three.machine import FiniteMachine
 
 
-class MissingBuildBuilder(FiniteMachineBuilder[int, str, int]):
+class MissingSpecBuilder(MachineBuilder[int, str]):
     pass
 
 
-class DummyBuilder(FiniteMachineBuilder[int, str, int]):
-    def build(self, config: int) -> FiniteMachine[int, str]:
+class DummyBuilder(MachineBuilder[int, str]):
+    def from_spec(self, spec: DeterministicMachineSpec[int, str]) -> FiniteMachine[int, str]:
         return FiniteMachine(
-            Q={0},
-            Sigma={"a"},
-            q0=0,
-            F={0},
-            delta={(0, "a"): 0},
+            Q=set(spec.Q),
+            Sigma=set(spec.Sigma),
+            q0=spec.q0,
+            F=set(spec.F),
+            delta=dict(spec.delta),
         )
 
 
 def test_base_builder_is_abstract() -> None:
-    builder_cls = cast(Any, FiniteMachineBuilder[int, str, int])
+    builder_cls = cast(Any, MachineBuilder[int, str])
     with pytest.raises(TypeError):
         builder_cls()
 
 
-def test_concrete_builder_must_implement_build() -> None:
-    missing_builder_cls = cast(Any, MissingBuildBuilder)
+def test_concrete_builder_must_implement_from_spec() -> None:
+    missing_builder_cls = cast(Any, MissingSpecBuilder)
     with pytest.raises(TypeError):
         missing_builder_cls()
 
 
 def test_concrete_builder_can_construct_finite_machine() -> None:
     builder = DummyBuilder()
-    machine = builder.build(1)
+    spec = DeterministicMachineSpec(
+        Q={0},
+        Sigma={"a"},
+        q0=0,
+        F={0},
+        delta={(0, "a"): 0},
+    )
+    machine = builder.from_spec(spec)
     assert isinstance(machine, FiniteMachine)

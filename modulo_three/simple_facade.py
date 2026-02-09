@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from modulo_three.builder import BinaryModFiniteMachineBuilder
+from modulo_three.builder import build_binary_mod_machine
 from modulo_three.machine import FiniteMachine
 
 
@@ -18,8 +18,7 @@ def _require_str(input_value: object) -> str:
 
 @lru_cache(maxsize=1)
 def _get_mod_three_machine() -> FiniteMachine[int, str]:
-    builder = BinaryModFiniteMachineBuilder()
-    return builder.build(3)
+    return build_binary_mod_machine(3)
 
 
 def modThree(input: str) -> int:

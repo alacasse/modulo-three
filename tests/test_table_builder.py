@@ -29,7 +29,7 @@ def test_table_builder_supports_non_modulo_state_and_symbol_types() -> None:
         },
     )
 
-    machine = builder.build(spec)
+    machine = builder.from_spec(spec)
 
     assert machine.q0 == Phase.START
     assert machine.run([1, 0]) == Phase.END
@@ -42,7 +42,7 @@ def test_table_builder_copies_input_collections() -> None:
     transitions = {("A", "x"): "B"}
 
     builder: DeterministicTableMachineBuilder[str, str] = DeterministicTableMachineBuilder()
-    machine = builder.build(
+    machine = builder.from_spec(
         DeterministicMachineSpec(
             Q=states,
             Sigma=symbols,

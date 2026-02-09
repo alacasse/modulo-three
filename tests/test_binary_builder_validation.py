@@ -3,26 +3,19 @@
 from __future__ import annotations
 
 import pytest
-from modulo_three.builder import BinaryModFiniteMachineBuilder
+from modulo_three.builder import build_binary_mod_spec
 
 
-@pytest.fixture
-def builder() -> BinaryModFiniteMachineBuilder:
-    return BinaryModFiniteMachineBuilder()
-
-
-def test_bool_mod_raises_type_error(builder: BinaryModFiniteMachineBuilder) -> None:
+def test_bool_mod_raises_type_error() -> None:
     with pytest.raises(TypeError):
-        builder.build(True)
+        build_binary_mod_spec(True)
 
 
-def test_non_int_mod_raises_type_error(builder: BinaryModFiniteMachineBuilder) -> None:
+def test_non_int_mod_raises_type_error() -> None:
     with pytest.raises(TypeError):
-        builder.build("3")  # type: ignore[arg-type]
+        build_binary_mod_spec("3")  # type: ignore[arg-type]
 
 
-def test_mod_less_than_one_raises_value_error(
-    builder: BinaryModFiniteMachineBuilder,
-) -> None:
+def test_mod_less_than_one_raises_value_error() -> None:
     with pytest.raises(ValueError):
-        builder.build(0)
+        build_binary_mod_spec(0)

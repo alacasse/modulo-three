@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from modulo_three.builder import BinaryModFiniteMachineBuilder
+from modulo_three.builder import build_binary_mod_machine
 
 
 def test_mod_three_builds_exact_transition_graph() -> None:
-    builder = BinaryModFiniteMachineBuilder()
-
-    machine = builder.build(3)
+    machine = build_binary_mod_machine(3)
 
     assert machine.Q == {0, 1, 2}
     assert machine.Sigma == {"0", "1"}
@@ -25,8 +23,7 @@ def test_mod_three_builds_exact_transition_graph() -> None:
 
 
 def test_transition_graph_is_total_for_every_state_symbol_pair() -> None:
-    builder = BinaryModFiniteMachineBuilder()
-    machine = builder.build(3)
+    machine = build_binary_mod_machine(3)
 
     for state in machine.Q:
         for symbol in machine.Sigma:

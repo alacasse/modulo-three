@@ -1,6 +1,6 @@
 """Builder abstractions for finite-machine construction.
 
-This module provides builder classes for constructing finite machines.
+This module provides builder classes and helpers for constructing finite machines.
 
 Note
 ----
@@ -9,8 +9,8 @@ primarily included to demonstrate the flexibility and extensibility of the
 Builder pattern and the :class:`FiniteMachine` abstraction. They show how the
 framework can be used with custom state types and explicit transition tables.
 
-The :class:`BinaryModFiniteMachineBuilder` is the primary implementation used
-in this project for creating binary modulo finite machines.
+The binary modulo machine is provided via :func:`build_binary_mod_spec` and
+:func:`build_binary_mod_machine`.
 """
 
 from __future__ import annotations
@@ -22,15 +22,7 @@ from dataclasses import dataclass
 from modulo_three.machine import FiniteMachine
 
 
-class FiniteMachineBuilder[StateT: Hashable, SymbolT: Hashable, BuildInputT](ABC):
-    """Base contract for builders that construct finite machines."""
-
-    @abstractmethod
-    def build(self, config: BuildInputT) -> FiniteMachine[StateT, SymbolT]:
-        """Construct and return a finite machine instance."""
-
-
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class DeterministicMachineSpec[StateT: Hashable, SymbolT: Hashable]:
     """Definition object for constructing deterministic finite machines.
 
@@ -45,8 +37,18 @@ class DeterministicMachineSpec[StateT: Hashable, SymbolT: Hashable]:
     delta: Mapping[tuple[StateT, SymbolT], StateT]
 
 
+class MachineBuilder[StateT: Hashable, SymbolT: Hashable](ABC):
+    """Build a FiniteMachine from a deterministic specification."""
+
+    @abstractmethod
+    def from_spec(
+        self, spec: DeterministicMachineSpec[StateT, SymbolT]
+    ) -> FiniteMachine[StateT, SymbolT]:
+        """Construct and return a finite machine instance."""
+
+
 class DeterministicTableMachineBuilder[StateT: Hashable, SymbolT: Hashable](
-    FiniteMachineBuilder[StateT, SymbolT, DeterministicMachineSpec[StateT, SymbolT]]
+    MachineBuilder[StateT, SymbolT]
 ):
     """Builder that creates a finite machine from an explicit transition table.
 
@@ -58,45 +60,48 @@ class DeterministicTableMachineBuilder[StateT: Hashable, SymbolT: Hashable](
     Note
     ----
     This class and its test suite (:mod:`tests.test_table_builder`) are primarily
-    for demonstration purposes. The :class:`BinaryModFiniteMachineBuilder` is
-    the actual builder used in this project.
+    for demonstration purposes. The binary modulo helpers are the actual
+    construction path used in this project.
     """
 
-    def build(
+    def from_spec(
         self,
-        config: DeterministicMachineSpec[StateT, SymbolT],
+        spec: DeterministicMachineSpec[StateT, SymbolT],
     ) -> FiniteMachine[StateT, SymbolT]:
         return FiniteMachine(
-            Q=set(config.Q),
-            Sigma=set(config.Sigma),
-            q0=config.q0,
-            F=set(config.F),
-            delta=dict(config.delta),
+            Q=set(spec.Q),
+            Sigma=set(spec.Sigma),
+            q0=spec.q0,
+            F=set(spec.F),
+            delta=dict(spec.delta),
         )
 
 
-class BinaryModFiniteMachineBuilder(FiniteMachineBuilder[int, str, int]):
-    """Builder for binary modulo finite machines."""
+def build_binary_mod_spec(mod: int) -> DeterministicMachineSpec[int, str]:
+    _validate_mod(mod)
 
-    def build(self, config: int) -> FiniteMachine[int, str]:
-        self._validate_mod(config)
-        states = set(range(config))
-        alphabet = {"0", "1"}
-        transitions = {
-            (state, symbol): (2 * state + int(symbol)) % config
-            for state in states
-            for symbol in alphabet
-        }
-        return FiniteMachine(
-            Q=states,
-            Sigma=alphabet,
-            q0=0,
-            F=set(states),
-            delta=transitions,
-        )
+    states = set(range(mod))
+    alphabet = {"0", "1"}
+    transitions: dict[tuple[int, str], int] = {
+        (state, symbol): (2 * state + int(symbol)) % mod for state in states for symbol in alphabet
+    }
 
-    def _validate_mod(self, mod: object) -> None:
-        if isinstance(mod, bool) or not isinstance(mod, int):
-            raise TypeError("mod must be int")
-        if mod < 1:
-            raise ValueError("mod must be >= 1")
+    return DeterministicMachineSpec(
+        Q=states,
+        Sigma=alphabet,
+        q0=0,
+        F=set(states),
+        delta=transitions,
+    )
+
+
+def build_binary_mod_machine(mod: int) -> FiniteMachine[int, str]:
+    spec = build_binary_mod_spec(mod)
+    return DeterministicTableMachineBuilder[int, str]().from_spec(spec)
+
+
+def _validate_mod(mod: object) -> None:
+    if isinstance(mod, bool) or not isinstance(mod, int):
+        raise TypeError("mod must be int")
+    if mod < 1:
+        raise ValueError("mod must be >= 1")

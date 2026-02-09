@@ -18,16 +18,17 @@ Reusable finite machine API:
   - `run(input_symbols: Iterable[SymbolT]) -> StateT`
   - `accepts(input_symbols: Iterable[SymbolT]) -> bool`
   - Use run() when you need the final state (e.g., modulo remainder). Use accepts() when you need an accept/reject verdict.
-- `BinaryModFiniteMachineBuilder` in `modulo_three/builder.py` **(primary implementation)**
+- `build_binary_mod_machine(mod: int) -> FiniteMachine[int, str]` in `modulo_three/builder.py` **(primary implementation)**
+- `build_binary_mod_spec(mod: int) -> DeterministicMachineSpec[int, str]` in `modulo_three/builder.py`
 - `DeterministicTableMachineBuilder` + `DeterministicMachineSpec` in `modulo_three/builder.py` *(demonstration only)*
 
 ## Builder Pattern Flexibility
 
 This project demonstrates the Builder pattern for constructing finite machines through two implementations:
 
-### `BinaryModFiniteMachineBuilder` (Primary)
+### `build_binary_mod_machine` (Primary)
 
-The `BinaryModFiniteMachineBuilder` is the **actual implementation used in this project** for creating binary modulo finite machines. It directly constructs the state machine for computing remainders modulo N for binary inputs.
+The `build_binary_mod_machine` helper is the **actual implementation used in this project** for creating binary modulo finite machines. It directly constructs the state machine for computing remainders modulo N for binary inputs.
 
 ### `DeterministicTableMachineBuilder` (Demonstration)
 
@@ -73,7 +74,7 @@ class Phase(Enum):
 
 
 builder = DeterministicTableMachineBuilder[Phase, int]()
-machine = builder.build(
+machine = builder.from_spec(
     DeterministicMachineSpec(
         Q={Phase.START, Phase.MID, Phase.END},
         Sigma={0, 1},
@@ -90,7 +91,7 @@ final_state = machine.run([1, 0])
 assert final_state is Phase.END
 ```
 
-This example showcases the builder's ability to work with arbitrary hashable types. For the actual modulo-three machine used in this project, see `BinaryModFiniteMachineBuilder`.
+This example showcases the builder's ability to work with arbitrary hashable types. For the actual modulo-three machine used in this project, see `build_binary_mod_machine`.
 
 ## Commands
 
