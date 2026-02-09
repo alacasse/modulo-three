@@ -11,6 +11,8 @@ from modulo_three.machine import FiniteMachine
 def _require_str(input_value: object) -> str:
     if not isinstance(input_value, str):
         raise TypeError("input must be str")
+    if input_value == "":
+        raise ValueError("input must be non-empty")
     return input_value
 
 

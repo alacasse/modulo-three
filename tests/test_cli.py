@@ -63,3 +63,10 @@ def test_cli_interactive_keeps_running_after_error() -> None:
     assert result.returncode == 0
     assert "2" in result.stdout
     assert "invalid symbol" in result.stderr
+
+
+def test_cli_interactive_rejects_empty_input() -> None:
+    result = _run_cli_with_input("\nq\n", "--interactive")
+
+    assert result.returncode == 0
+    assert "input must be non-empty" in result.stderr

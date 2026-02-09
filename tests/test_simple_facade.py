@@ -16,7 +16,6 @@ from modulo_three.simple_facade import modThree
 @pytest.mark.parametrize(
     ("input_value", "expected"),
     [
-        ("", 0),
         ("1101", 1),
         ("1110", 2),
         ("1111", 0),
@@ -32,6 +31,11 @@ def test_mod_three_returns_expected_remainder(input_value: str, expected: int) -
 def test_mod_three_rejects_non_string_input() -> None:
     with pytest.raises(TypeError, match=r"input must be str"):
         modThree(123)  # type: ignore[arg-type]
+
+
+def test_mod_three_rejects_empty_input() -> None:
+    with pytest.raises(ValueError, match=r"input must be non-empty"):
+        modThree("")
 
 
 def test_mod_three_rejects_invalid_symbol() -> None:
@@ -61,25 +65,18 @@ def test_mod_three_reuses_cached_machine(monkeypatch: pytest.MonkeyPatch) -> Non
     assert 1 == build_count
 
 
-def test_mod_three_produces_correct_result_for_all_binary_strings_of_length_0_to_8() -> None:
-    """Verify modThree matches the mathematical formula for all binary inputs up to length 8.
+def test_mod_three_produces_correct_result_for_all_binary_strings_of_length_1_to_8() -> None:
+    """Verify modThree matches the mathematical formula for all binary inputs of length 1 to 8."""
 
-    This is an exhaustive test that generates every possible binary string
-    from length 0 ("") to length 8 ("11111111") and compares the result
-    against a known-correct reference implementation.
-    """
-
-    # Reference: mathematical formula for computing binary modulo 3
     def reference_mod_three(binary_string: str) -> int:
         remainder = 0
         for char in binary_string:
             remainder = (2 * remainder + int(char)) % 3
         return remainder
 
-    # Generate all possible binary strings from length 0 to 8
-    # "01" represents the two valid symbols, and repeat controls string length
-    for length in range(9):  # lengths 0 through 8 inclusive
-        # product generates every combination of "0" and "1" of this length
-        for bits in product("01", repeat=length):
-            binary_input = "".join(bits)
-            assert modThree(binary_input) == reference_mod_three(binary_input)
+    assert all(
+        modThree(binary) == reference_mod_three(binary)
+        for length in range(1, 9)
+        for bits in product("01", repeat=length)
+        for binary in ["".join(bits)]
+    )
