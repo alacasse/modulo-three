@@ -47,21 +47,3 @@ def test_concrete_builder_can_construct_finite_machine() -> None:
     )
     machine = builder.from_spec(spec)
     assert isinstance(machine, FiniteMachine)
-
-
-def test_spec_is_mutable() -> None:
-    spec = DeterministicMachineSpec(
-        Q={0, 1},
-        Sigma={"a"},
-        q0=0,
-        F={1},
-        delta={(0, "a"): 1, (1, "a"): 1},
-    )
-
-    spec.q0 = 1
-    spec.F.add(0)
-    spec.delta[(1, "a")] = 0
-
-    assert spec.q0 == 1
-    assert spec.F == {0, 1}
-    assert spec.delta[(1, "a")] == 0

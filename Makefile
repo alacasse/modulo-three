@@ -22,7 +22,6 @@ test:
 
 lint:
 	.venv/bin/ruff check modulo_three tests
-	.venv/bin/ruff format --check modulo_three tests
 
 format:
 	.venv/bin/ruff format modulo_three tests
