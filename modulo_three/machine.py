@@ -113,10 +113,22 @@ class FiniteMachine[StateT: Hashable, SymbolT: Hashable]:
         """
         current_state = self.q0
         for index, symbol in enumerate(input_symbols):
-            if symbol not in self.Sigma:
-                raise ValueError(f"invalid symbol at index {index}: {symbol!r}")
-            current_state = self.delta[(current_state, symbol)]
+            current_state = self.step(current_state, symbol, index=index)
         return current_state
+
+    def step(
+        self,
+        state: StateT,
+        symbol: SymbolT,
+        *,
+        index: int | None = None,
+    ) -> StateT:
+        """Advance the machine by one symbol and return the next state."""
+        if symbol not in self.Sigma:
+            if index is None:
+                raise ValueError(f"invalid symbol: {symbol!r}")
+            raise ValueError(f"invalid symbol at index {index}: {symbol!r}")
+        return self.delta[(state, symbol)]
 
     def accepts(self, input_symbols: Iterable[SymbolT]) -> bool:
         """Return True if the input is accepted by the machine.

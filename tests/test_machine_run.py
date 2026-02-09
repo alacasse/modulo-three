@@ -6,6 +6,21 @@ import pytest
 from modulo_three.machine import FiniteMachine
 
 
+def _step_machine() -> FiniteMachine[int, str]:
+    return FiniteMachine(
+        Q={0, 1},
+        Sigma={"a", "b"},
+        q0=0,
+        F={0, 1},
+        delta={
+            (0, "a"): 1,
+            (0, "b"): 0,
+            (1, "a"): 1,
+            (1, "b"): 0,
+        },
+    )
+
+
 def test_init_raises_when_delta_is_empty_for_non_empty_q_and_sigma() -> None:
     with pytest.raises(
         ValueError,
@@ -105,3 +120,17 @@ def test_accepts_returns_false_when_final_state_is_not_accepting() -> None:
     )
 
     assert machine.accepts("a") is False
+
+
+def test_step_returns_next_state() -> None:
+    machine = _step_machine()
+
+    assert machine.step(0, "a") == 1
+    assert machine.step(1, "b") == 0
+
+
+def test_step_raises_value_error_for_invalid_symbol_without_index() -> None:
+    machine = _step_machine()
+
+    with pytest.raises(ValueError, match=r"invalid symbol: 'z'"):
+        machine.step(0, "z")
