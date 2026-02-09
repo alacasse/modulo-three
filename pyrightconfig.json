@@ -4,5 +4,6 @@
   "include": ["modulo_three", "tests"],
   "venvPath": ".",
   "venv": ".venv",
-  "reportMissingTypeStubs": "none"
+  "reportMissingTypeStubs": "none",
+  "reportConstantRedefinition": "none"
 }

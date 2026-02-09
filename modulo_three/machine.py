@@ -79,10 +79,10 @@ class FiniteMachine[StateT: Hashable, SymbolT: Hashable]:
 
     def __post_init__(self) -> None:
         # Defensive copies to avoid aliasing surprises.
-        object.__setattr__(self, "Q", set(self.Q))
-        object.__setattr__(self, "Sigma", set(self.Sigma))
-        object.__setattr__(self, "F", set(self.F))
-        object.__setattr__(self, "delta", dict(self.delta))
+        self.Q = set(self.Q)
+        self.Sigma = set(self.Sigma)
+        self.F = set(self.F)
+        self.delta = dict(self.delta)
 
         self._validate_definition_total()
 
