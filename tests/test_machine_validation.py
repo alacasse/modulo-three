@@ -14,6 +14,8 @@ def _machine() -> FiniteMachine[int, str]:
         F={0, 1},
         delta={
             (0, "a"): 1,
+            (0, "b"): 0,
+            (1, "a"): 1,
             (1, "b"): 0,
         },
     )
@@ -32,12 +34,3 @@ def test_run_raises_value_error_for_invalid_symbol_with_index() -> None:
         match=r"invalid symbol at index 1: 'z'",
     ):
         machine.run("az")
-
-
-def test_run_raises_value_error_for_missing_transition() -> None:
-    machine = _machine()
-    with pytest.raises(
-        ValueError,
-        match=r"missing transition at index 1: state=1, symbol='a'",
-    ):
-        machine.run("aa")

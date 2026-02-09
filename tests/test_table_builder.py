@@ -24,8 +24,12 @@ def test_table_builder_supports_non_modulo_state_and_symbol_types() -> None:
         q0=Phase.START,
         F={Phase.END},
         delta={
+            (Phase.START, 0): Phase.START,
             (Phase.START, 1): Phase.MID,
             (Phase.MID, 0): Phase.END,
+            (Phase.MID, 1): Phase.MID,
+            (Phase.END, 0): Phase.END,
+            (Phase.END, 1): Phase.END,
         },
     )
 
@@ -39,7 +43,7 @@ def test_table_builder_copies_input_collections() -> None:
     states = {"A", "B"}
     symbols = {"x"}
     accepting_states = {"B"}
-    transitions = {("A", "x"): "B"}
+    transitions = {("A", "x"): "B", ("B", "x"): "A"}
 
     builder: DeterministicTableMachineBuilder[str, str] = DeterministicTableMachineBuilder()
     machine = builder.from_spec(
@@ -55,9 +59,9 @@ def test_table_builder_copies_input_collections() -> None:
     states.add("C")
     symbols.add("y")
     accepting_states.add("C")
-    transitions[("B", "x")] = "A"
+    transitions[("A", "y")] = "A"
 
     assert machine.Q == {"A", "B"}
     assert machine.Sigma == {"x"}
     assert machine.F == {"B"}
-    assert dict(machine.delta) == {("A", "x"): "B"}
+    assert dict(machine.delta) == {("A", "x"): "B", ("B", "x"): "A"}

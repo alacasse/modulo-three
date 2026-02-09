@@ -37,21 +37,23 @@ Example:
         assert machine.run(['1']) == 1  # odd
 """
 
+from __future__ import annotations
+
 from collections.abc import Hashable, Iterable, Mapping
 from dataclasses import dataclass
 
 
 @dataclass(slots=True)
 class FiniteMachine[StateT: Hashable, SymbolT: Hashable]:
-    """Generic finite-machine 5-tuple data model.
+    """Total deterministic finite-machine 5-tuple data model.
 
     A deterministic finite automaton (DFA) processes an input sequence of symbols
     from left to right, transitioning between states according to a transition
     function. If the machine ends in a state that is a member of F, the input
     is considered accepted.
 
-    This class enforces the mathematical constraints of a valid finite automaton
-    through runtime validation in :meth:`_validate_definition`.
+    This class enforces the mathematical constraints of a valid total DFA through
+    runtime validation in :meth:`_validate_definition_total`.
 
     Type Parameters:
         StateT: The type used for states. Must be hashable since states are stored
@@ -76,7 +78,13 @@ class FiniteMachine[StateT: Hashable, SymbolT: Hashable]:
     exactly one next state is defined. Keys are (state, symbol) tuples."""
 
     def __post_init__(self) -> None:
-        self._validate_definition()
+        # Defensive copies to avoid aliasing surprises.
+        object.__setattr__(self, "Q", set(self.Q))
+        object.__setattr__(self, "Sigma", set(self.Sigma))
+        object.__setattr__(self, "F", set(self.F))
+        object.__setattr__(self, "delta", dict(self.delta))
+
+        self._validate_definition_total()
 
     def run(self, input_symbols: Iterable[SymbolT]) -> StateT:
         """Process input left-to-right and return the final state.
@@ -92,24 +100,18 @@ class FiniteMachine[StateT: Hashable, SymbolT: Hashable]:
             The final state after processing all input symbols.
 
         Raises:
-            ValueError: If any input symbol is not in the alphabet Σ, or if a
-                transition is undefined for a valid (state, symbol) pair.
+            ValueError: If any input symbol is not in the alphabet Σ.
 
         Note:
-            This implements a deterministic finite automaton (DFA), where each
-            (state, symbol) pair has exactly one transition defined in delta.
+            This implements a deterministic finite automaton (DFA). The
+            transition function is total, so every (state, symbol) pair is
+            defined in delta.
         """
         current_state = self.q0
         for index, symbol in enumerate(input_symbols):
             if symbol not in self.Sigma:
                 raise ValueError(f"invalid symbol at index {index}: {symbol!r}")
-            transition_key = (current_state, symbol)
-            if transition_key not in self.delta:
-                raise ValueError(
-                    f"missing transition at index {index}: "
-                    f"state={current_state!r}, symbol={symbol!r}"
-                )
-            current_state = self.delta[transition_key]
+            current_state = self.delta[(current_state, symbol)]
         return current_state
 
     def accepts(self, input_symbols: Iterable[SymbolT]) -> bool:
@@ -120,29 +122,60 @@ class FiniteMachine[StateT: Hashable, SymbolT: Hashable]:
         """
         return self.run(input_symbols) in self.F
 
-    def _validate_definition(self) -> None:
-        """Validate the mathematical constraints of a finite automaton.
+    def _validate_definition_total(self) -> None:
+        """Validate the mathematical constraints of a total DFA.
 
         A valid finite machine definition must satisfy:
-        1. The initial state q0 must exist in Q
-        2. All accepting states F must be valid states in Q
-        3. All transition source states must be in Q
-        4. All transition input symbols must be in Σ
-        5. All transition destination states must be in Q
+        1. Q and Sigma must be non-empty
+        2. The initial state q0 must exist in Q
+        3. All accepting states F must be valid states in Q
+        4. All transition source states must be in Q
+        5. All transition input symbols must be in Sigma
+        6. All transition destination states must be in Q
+        7. The transition function is total over QxSigma
 
         These constraints ensure the machine is well-formed and can process
         any valid input without encountering undefined states or symbols.
         """
+        if not self.Q:
+            raise ValueError("Q must be non-empty")
+        if not self.Sigma:
+            raise ValueError("Sigma must be non-empty")
         if self.q0 not in self.Q:
-            raise ValueError("q0 must be a member of Q")
+            raise ValueError(f"q0 must be a member of Q: q0={self.q0!r}")
         if not self.F.issubset(self.Q):
-            raise ValueError("F must be a subset of Q")
+            extra = self.F.difference(self.Q)
+            raise ValueError(f"F must be a subset of Q: extra={extra!r}")
 
         for key, next_state in self.delta.items():
             state, symbol = key
             if state not in self.Q:
-                raise ValueError("delta key state must be in Q")
+                raise ValueError(
+                    f"delta key state must be in Q: state={state!r}, symbol={symbol!r}"
+                )
             if symbol not in self.Sigma:
-                raise ValueError("delta key symbol must be in Sigma")
+                raise ValueError(
+                    f"delta key symbol must be in Sigma: state={state!r}, symbol={symbol!r}"
+                )
             if next_state not in self.Q:
-                raise ValueError("delta value must be in Q")
+                raise ValueError(
+                    f"delta value must be in Q: key={(state, symbol)!r}, next_state={next_state!r}"
+                )
+
+        expected_count = len(self.Q) * len(self.Sigma)
+        if len(self.delta) != expected_count:
+            missing = [
+                (state, symbol)
+                for state in self.Q
+                for symbol in self.Sigma
+                if (state, symbol) not in self.delta
+            ]
+            if missing:
+                suffix = " (truncated)" if len(missing) > 10 else ""
+                details = f"missing={missing[:10]!r}{suffix}"
+            else:
+                details = "delta size mismatch"
+            raise ValueError(
+                "delta must be total over QxSigma: "
+                f"expected={expected_count}, actual={len(self.delta)}; {details}"
+            )
